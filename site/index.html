@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>vibenotifications -- Notifications for Claude Code</title>
+  <meta name="description" content="See your GitHub PRs, Slack DMs, and stock prices while you code. Customizable notifications for Claude Code.">
+  <meta name="theme-color" content="#0a0a0a">
+
+  <!-- Open Graph -->
+  <meta property="og:title" content="vibenotifications">
+  <meta property="og:description" content="See your GitHub PRs, Slack DMs, and stock prices while you code.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://vibenotifications.com">
+
+  <link rel="stylesheet" href="style.css">
+
+  <!-- Favicon (inline SVG data URI) -->
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#x1f514;</text></svg>">
+</head>
+<body>
+
+  <!-- ============ Hero ============ -->
+  <section class="hero">
+    <div class="container">
+      <div class="hero__badge">Open Source</div>
+      <h1 class="hero__title"><span>vibenotifications</span></h1>
+      <p class="hero__tagline">See your GitHub PRs, Slack DMs, and stock prices while you code.</p>
+
+      <!-- Install Command -->
+      <div class="install" role="group" aria-label="Install command">
+        <span class="install__prompt" aria-hidden="true">$</span>
+        <code class="install__code" id="install-cmd">npm install -g vibenotifications && vibenotifications init</code>
+        <button class="install__copy" onclick="copyInstall()" aria-label="Copy install command" id="copy-btn">
+          <svg class="install__copy-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+          </svg>
+          <span id="copy-text">Copy</span>
+        </button>
+      </div>
+
+      <!-- Terminal Mockup -->
+      <div class="terminal" role="img" aria-label="Terminal showing vibenotifications output">
+        <div class="terminal__titlebar">
+          <div class="terminal__dot terminal__dot--red"></div>
+          <div class="terminal__dot terminal__dot--yellow"></div>
+          <div class="terminal__dot terminal__dot--green"></div>
+          <div class="terminal__title">claude -- vibenotifications</div>
+        </div>
+        <div class="terminal__body">
+          <div class="terminal__line">
+            <span class="terminal__spinner" aria-hidden="true">*</span>
+            <span class="terminal__tag terminal__tag--stocks">[STOCKS]</span>
+            <span class="terminal__text">BTC: $66,756 <span class="terminal__text--positive">(+2.3%)</span></span>
+            <span class="terminal__text--time">(12s)</span>
+          </div>
+          <div class="terminal__line">
+            <span class="terminal__spinner" aria-hidden="true">*</span>
+            <span class="terminal__tag terminal__tag--github">[GITHUB]</span>
+            <span class="terminal__text">Review requested: Add auth middleware</span>
+            <span class="terminal__text--time">(8s)</span>
+          </div>
+          <div class="terminal__line">
+            <span class="terminal__spinner" aria-hidden="true">*</span>
+            <span class="terminal__tag terminal__tag--slack">[SLACK]</span>
+            <span class="terminal__text">DM: Hey, can you check the PR?</span>
+            <span class="terminal__text--time">(3s)</span>
+          </div>
+          <div class="terminal__line">
+            <span class="terminal__spinner" aria-hidden="true">*</span>
+            <span class="terminal__tag terminal__tag--email">[EMAIL]</span>
+            <span class="terminal__text">3 unread -- "Deploy approval needed"</span>
+            <span class="terminal__text--time">(45s)</span>
+          </div>
+          <div class="terminal__line">
+            <span class="terminal__spinner" aria-hidden="true">*</span>
+            <span class="terminal__tag terminal__tag--x">[X]</span>
+            <span class="terminal__text">@devfriend mentioned you: "great project!"</span>
+            <span class="terminal__text--time">(2m)</span>
+          </div>
+          <div class="terminal__line" style="margin-top: 0.25rem">
+            <span style="color: #525252">claude&gt;</span>
+            <span class="terminal__cursor" aria-hidden="true"></span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ Plugins / Features ============ -->
+  <section class="features" id="plugins">
+    <div class="container">
+      <div class="section-header">
+        <div class="section-header__label">Plugins</div>
+        <h2 class="section-header__title">6 notification sources, one tool</h2>
+        <p class="section-header__subtitle">Connect the services you already use. Each plugin fetches in the background and surfaces what matters.</p>
+      </div>
+
+      <div class="features__grid">
+        <!-- GitHub -->
+        <div class="feature">
+          <div class="feature__icon feature__icon--github">GH</div>
+          <div class="feature__name">GitHub</div>
+          <div class="feature__desc">PR reviews, CI failures, mentions, and issue assignments delivered as they happen.</div>
+        </div>
+        <!-- Slack -->
+        <div class="feature">
+          <div class="feature__icon feature__icon--slack">SL</div>
+          <div class="feature__name">Slack</div>
+          <div class="feature__desc">DMs, channel mentions, and thread replies without switching windows.</div>
+        </div>
+        <!-- X/Twitter -->
+        <div class="feature">
+          <div class="feature__icon feature__icon--x">X</div>
+          <div class="feature__name">X / Twitter</div>
+          <div class="feature__desc">Mentions, DMs, and bookmark highlights from your timeline.</div>
+        </div>
+        <!-- Email -->
+        <div class="feature">
+          <div class="feature__icon feature__icon--email">EM</div>
+          <div class="feature__name">Email</div>
+          <div class="feature__desc">Unread count and important subject lines from your inbox via IMAP.</div>
+        </div>
+        <!-- Stocks/Crypto -->
+        <div class="feature">
+          <div class="feature__icon feature__icon--stocks">$$</div>
+          <div class="feature__name">Stocks / Crypto</div>
+          <div class="feature__desc">BTC, ETH, AAPL, and any ticker you track -- with price change alerts.</div>
+        </div>
+        <!-- MCP Bridge -->
+        <div class="feature">
+          <div class="feature__icon feature__icon--mcp">MC</div>
+          <div class="feature__name">MCP Bridge</div>
+          <div class="feature__desc">Pull notifications from connected MCP servers. No API key needed.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 5 Surfaces ============ -->
+  <section class="surfaces" id="surfaces">
+    <div class="container">
+      <div class="section-header">
+        <div class="section-header__label">Surfaces</div>
+        <h2 class="section-header__title">5 ways to see your notifications</h2>
+        <p class="section-header__subtitle">From subtle spinners to full dashboards. Every surface is configurable and priority-aware.</p>
+      </div>
+
+      <div class="surfaces__list">
+        <div class="surface">
+          <div class="surface__number">1</div>
+          <div class="surface__content">
+            <div class="surface__name">Spinner Verbs</div>
+            <div class="surface__desc">Notification titles replace the Claude Code spinner text while it thinks. A passive, ambient way to stay informed without any interruption.</div>
+          </div>
+        </div>
+        <div class="surface">
+          <div class="surface__number">2</div>
+          <div class="surface__content">
+            <div class="surface__name">Status Line</div>
+            <div class="surface__desc">The top-priority notification is shown in a persistent status bar with clickable links that open in your browser.</div>
+          </div>
+        </div>
+        <div class="surface">
+          <div class="surface__number">3</div>
+          <div class="surface__content">
+            <div class="surface__name">Context Injection</div>
+            <div class="surface__desc">High-priority items are injected into Claude's context so it can mention things naturally. "By the way, your CI is failing on line 42."</div>
+          </div>
+        </div>
+        <div class="surface">
+          <div class="surface__number">4</div>
+          <div class="surface__content">
+            <div class="surface__name">Session Summary</div>
+            <div class="surface__desc">When you start or resume a session, see a digest of everything you missed -- PRs, messages, price moves, and more.</div>
+          </div>
+        </div>
+        <div class="surface">
+          <div class="surface__number">5</div>
+          <div class="surface__content">
+            <div class="surface__name">Dashboard</div>
+            <div class="surface__desc">A full notification list via <code style="color:#f59e0b;font-size:0.8rem">vibenotifications dashboard</code> -- filterable, sortable, with all the details.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ Footer ============ -->
+  <footer class="footer">
+    <div class="container">
+      <div class="footer__badges">
+        <a href="https://github.com/pooriaarab/vibenotifications" class="footer__badge" target="_blank" rel="noopener">
+          <span class="footer__badge-dot"></span>
+          Open Source
+        </a>
+        <a href="https://github.com/pooriaarab/vibenotifications/blob/main/LICENSE" class="footer__badge" target="_blank" rel="noopener">
+          MIT License
+        </a>
+        <a href="https://www.npmjs.com/package/vibenotifications" class="footer__badge" target="_blank" rel="noopener">
+          npm: vibenotifications
+        </a>
+      </div>
+      <p class="footer__text">
+        Built by <a href="https://github.com/pooriaarab" target="_blank" rel="noopener">@pooriaarab</a>
+      </p>
+    </div>
+  </footer>
+
+  <!-- ============ Script ============ -->
+  <script>
+    function copyInstall() {
+      var text = document.getElementById('install-cmd').textContent;
+      var btn = document.getElementById('copy-btn');
+      var label = document.getElementById('copy-text');
+
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(function() {
+          showCopied(btn, label);
+        });
+      } else {
+        // Fallback for older browsers
+        var textarea = document.createElement('textarea');
+        textarea.value = text;
+        textarea.style.position = 'fixed';
+        textarea.style.opacity = '0';
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textarea);
+        showCopied(btn, label);
+      }
+    }
+
+    function showCopied(btn, label) {
+      btn.classList.add('copied');
+      label.textContent = 'Copied!';
+      setTimeout(function() {
+        btn.classList.remove('copied');
+        label.textContent = 'Copy';
+      }, 2000);
+    }
+  </script>
+
+</body>
+</html>
