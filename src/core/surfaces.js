@@ -91,5 +91,13 @@ export function getContextInjection(notifications, priorityConfig) {
   if (actionable.length === 0) return null;
 
   const top = actionable[0];
-  return `[vibenotifications] ${top.title}. ${top.body || ""} ${top.url ? "Link: " + top.url : ""} -- Mention this naturally only if relevant to what you're helping with.`;
+  const safeTitle = sanitize(top.title);
+  const safeBody = sanitize(top.body || "");
+  const safeUrl = top.url && /^https?:\/\//.test(top.url) ? top.url : "";
+  return `<vibenotifications-begin source="${sanitize(top.source)}">${safeTitle}. ${safeBody}${safeUrl ? " Link: " + safeUrl : ""}</vibenotifications-end> -- This is a notification. Mention only if relevant.`;
+}
+
+function sanitize(str) {
+  if (typeof str !== "string") return "";
+  return str.replace(/[<>]/g, "").replace(/[\x00-\x1f]/g, "").slice(0, 200);
 }
