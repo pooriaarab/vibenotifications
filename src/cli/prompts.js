@@ -29,16 +29,19 @@ export { ANSI };
  * @returns {Promise<string[]>} - Array of selected item names
  */
 export function checkboxSelect(title, items) {
+  // Total rows = items + 1 "Done" row
+  const DONE_INDEX = items.length;
+
   return new Promise((resolve) => {
     let cursor = 0;
     const selected = new Set(items.filter((i) => i.checked).map((i) => i.name));
 
     function render() {
-      const totalLines = items.length + 4;
+      const totalLines = DONE_INDEX + 5; // title + hint + blank + items + done
       let output = `\x1b[${totalLines}A`;
 
       output += `${ANSI.clearLine}${ANSI.bold}${title}${ANSI.reset}\n`;
-      output += `${ANSI.clearLine}${ANSI.gray}  ↑/↓ navigate  ·  space toggle  ·  a select all  ·  enter confirm${ANSI.reset}\n`;
+      output += `${ANSI.clearLine}${ANSI.gray}  ↑/↓ navigate  ·  enter select  ·  a select all${ANSI.reset}\n`;
       output += `${ANSI.clearLine}\n`;
 
       for (let i = 0; i < items.length; i++) {
@@ -59,12 +62,23 @@ export function checkboxSelect(title, items) {
         output += `${ANSI.clearLine}  ${pointer} ${checkbox} ${label}${desc}\n`;
       }
 
+      // "Done" row
+      const isDone = cursor === DONE_INDEX;
+      const count = selected.size;
+      const doneLabel = count > 0
+        ? `Done (${count} selected)`
+        : "Done";
+      if (isDone) {
+        output += `${ANSI.clearLine}  ${ANSI.cyan}❯${ANSI.reset} ${ANSI.green}${ANSI.bold}→ ${doneLabel}${ANSI.reset}\n`;
+      } else {
+        output += `${ANSI.clearLine}    ${ANSI.gray}→ ${doneLabel}${ANSI.reset}\n`;
+      }
+
       output += `${ANSI.clearLine}`;
       process.stdout.write(output);
     }
 
-    // Print blank lines to reserve space, then render over them
-    const totalLines = items.length + 4;
+    const totalLines = DONE_INDEX + 5;
     process.stdout.write("\n".repeat(totalLines));
     render();
 
@@ -74,10 +88,37 @@ export function checkboxSelect(title, items) {
 
     function onKey(key) {
       if (key === "\x03") { cleanup(); process.exit(0); }
-      if (key === "\x1b[A" || key === "k") { cursor = cursor > 0 ? cursor - 1 : items.length - 1; render(); return; }
-      if (key === "\x1b[B" || key === "j") { cursor = cursor < items.length - 1 ? cursor + 1 : 0; render(); return; }
 
-      if (key === " ") {
+      // Up
+      if (key === "\x1b[A" || key === "k") {
+        cursor = cursor > 0 ? cursor - 1 : DONE_INDEX;
+        render();
+        return;
+      }
+
+      // Down
+      if (key === "\x1b[B" || key === "j") {
+        cursor = cursor < DONE_INDEX ? cursor + 1 : 0;
+        render();
+        return;
+      }
+
+      // Enter or Space — toggle if on an item, confirm if on Done
+      if (key === "\r" || key === "\n" || key === " ") {
+        if (cursor === DONE_INDEX) {
+          // Confirm
+          cleanup();
+          const selectedLabels = items.filter((i) => selected.has(i.name)).map((i) => i.label);
+          if (selectedLabels.length > 0) {
+            console.log(`${ANSI.green}Selected:${ANSI.reset} ${selectedLabels.join(", ")}\n`);
+          } else {
+            console.log(`${ANSI.gray}No sources selected.${ANSI.reset}\n`);
+          }
+          resolve(items.filter((i) => selected.has(i.name)).map((i) => i.name));
+          return;
+        }
+
+        // Toggle item
         const name = items[cursor].name;
         if (selected.has(name)) selected.delete(name);
         else selected.add(name);
@@ -85,22 +126,11 @@ export function checkboxSelect(title, items) {
         return;
       }
 
+      // 'a' — select/deselect all
       if (key === "a") {
         if (selected.size === items.length) selected.clear();
         else for (const item of items) selected.add(item.name);
         render();
-        return;
-      }
-
-      if (key === "\r" || key === "\n") {
-        cleanup();
-        const selectedLabels = items.filter((i) => selected.has(i.name)).map((i) => i.label);
-        if (selectedLabels.length > 0) {
-          console.log(`${ANSI.green}Selected:${ANSI.reset} ${selectedLabels.join(", ")}\n`);
-        } else {
-          console.log(`${ANSI.gray}No sources selected.${ANSI.reset}\n`);
-        }
-        resolve(items.filter((i) => selected.has(i.name)).map((i) => i.name));
         return;
       }
     }

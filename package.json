@@ -1,6 +1,6 @@
 {
   "name": "vibenotifications",
-  "version": "0.4.1",
+  "version": "0.4.2",
   "description": "Customizable notifications for Claude Code -- GitHub PRs, Slack DMs, stock prices, and more while you code",
   "type": "module",
   "bin": {
