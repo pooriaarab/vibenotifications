@@ -61,7 +61,7 @@ Usage:
   vibenotifications fetch           Fetch notifications once (no daemon)
   vibenotifications uninstall       Remove everything
 
-Plugins: github, slack, x, email, stocks, mcp-bridge`);
+Plugins: apple-calendar, email, github, google-calendar, mcp-bridge, slack, stocks, x`);
       break;
     default: {
       const { init } = await import("../src/cli/init.js");
