@@ -45,10 +45,13 @@ async function main() {
       await uninstall();
       break;
     }
-    default:
+    case "help":
+    case "--help":
+    case "-h":
       console.log(`vibenotifications -- customizable notifications for Claude Code
 
 Usage:
+  vibenotifications                 Interactive setup wizard
   vibenotifications init            Interactive setup wizard
   vibenotifications dashboard       View all notifications
   vibenotifications add <plugin>    Enable a new source
@@ -59,6 +62,11 @@ Usage:
   vibenotifications uninstall       Remove everything
 
 Plugins: github, slack, x, email, stocks, mcp-bridge`);
+      break;
+    default: {
+      const { init } = await import("../src/cli/init.js");
+      await init();
+    }
   }
 }
 
