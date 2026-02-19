@@ -7,16 +7,30 @@ export default {
     bearerToken: {
       label: "X API Bearer Token",
       type: "secret",
+      placeholder: "AAAA...",
       instructions:
         "1. Go to developer.x.com/en/portal/dashboard\n" +
         "   2. Create a project and app\n" +
         "   3. Go to Keys and Tokens\n" +
         "   4. Copy the Bearer Token",
+      validate: (value) => {
+        if (!value) return "Bearer Token is required.";
+        if (value.length < 20) return "Token looks too short. Make sure you copied the full Bearer Token.";
+        return null;
+      },
     },
     userId: {
       label: "Your X user ID (numeric)",
       type: "string",
+      placeholder: "e.g. 1234567890",
       instructions: "Find your user ID at tweeterid.com by entering your @handle",
+      validate: (value) => {
+        if (!value) return "User ID is required.";
+        if (!/^\d+$/.test(value)) {
+          return "User ID should be numeric (digits only). Find it at tweeterid.com";
+        }
+        return null;
+      },
     },
   },
 

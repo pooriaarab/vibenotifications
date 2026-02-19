@@ -1,6 +1,6 @@
-import { createInterface } from "readline";
 import { loadSettings, saveSettings } from "../core/config.js";
 import { getPlugin } from "../core/plugins.js";
+import { textInput, ANSI } from "./prompts.js";
 
 export async function add(pluginName) {
   if (!pluginName) {
@@ -15,28 +15,26 @@ export async function add(pluginName) {
     return;
   }
 
-  const rl = createInterface({ input: process.stdin, output: process.stdout });
-  const ask = (q) => new Promise((resolve) => rl.question(q, resolve));
-
   const settings = loadSettings();
   const pluginConfig = { enabled: true };
 
-  console.log(`Setting up ${plugin.displayName}...`);
+  console.log(`${ANSI.bold}Setting up ${plugin.displayName}...${ANSI.reset}`);
   for (const [key, schema] of Object.entries(plugin.requiredConfig)) {
-    if (schema.instructions) console.log(`  ${schema.instructions}`);
-    const value = await ask(`  ${schema.label}: `);
-    pluginConfig[key] = value.trim();
+    if (schema.instructions) console.log(`${ANSI.gray}  ${schema.instructions}${ANSI.reset}`);
+    const value = await textInput(schema.label, {
+      placeholder: schema.placeholder,
+      validate: schema.validate,
+    });
+    pluginConfig[key] = value;
   }
 
   try {
     const result = await plugin.setup(pluginConfig);
-    console.log(`  Connected! ${JSON.stringify(result)}`);
+    console.log(`  ${ANSI.green}✓ Connected!${ANSI.reset} ${ANSI.gray}${JSON.stringify(result)}${ANSI.reset}`);
     settings.sources[plugin.name] = pluginConfig;
     saveSettings(settings);
     console.log("  Saved.");
   } catch (err) {
-    console.log(`  Failed: ${err.message}`);
+    console.log(`  ${ANSI.red}✗ Failed: ${err.message}${ANSI.reset}`);
   }
-
-  rl.close();
 }

@@ -5,9 +5,21 @@ export default {
 
   requiredConfig: {
     symbols: {
-      label: "Symbols to track (comma-separated, e.g. AAPL,BTC,ETH)",
+      label: "Symbols to track",
       type: "string",
-      instructions: "Enter stock tickers or crypto symbols separated by commas.",
+      placeholder: "BTC,ETH,SOL",
+      instructions: "Enter crypto or stock symbols separated by commas.\n   Crypto (free): BTC, ETH, SOL, DOGE  |  Stocks: AAPL, TSLA, etc.",
+      validate: (value) => {
+        if (!value) return "Enter at least one symbol.";
+        const symbols = value.split(",").map((s) => s.trim()).filter(Boolean);
+        if (symbols.length === 0) return "Enter at least one symbol.";
+        for (const s of symbols) {
+          if (!/^[A-Za-z]{1,10}$/.test(s)) {
+            return `'${s}' doesn't look like a valid ticker symbol (letters only, 1-10 chars).`;
+          }
+        }
+        return null;
+      },
     },
   },
 
@@ -21,7 +33,6 @@ export default {
     const symbols = parseSymbols(config.symbols);
     const notifications = [];
 
-    // Crypto via CoinGecko (free, no key)
     const cryptoMap = { BTC: "bitcoin", ETH: "ethereum", SOL: "solana", DOGE: "dogecoin" };
     const cryptoSymbols = symbols.filter((s) => cryptoMap[s.toUpperCase()]);
     const stockSymbols = symbols.filter((s) => !cryptoMap[s.toUpperCase()]);
@@ -58,7 +69,6 @@ export default {
       }
     }
 
-    // For stocks, we'd use Alpha Vantage or similar — for MVP, just show placeholder
     for (const symbol of stockSymbols) {
       notifications.push({
         id: `stocks-${symbol}-${Date.now()}`,
