@@ -15,8 +15,8 @@ export async function init() {
   const plugins = await loadPlugins();
   const settings = loadSettings();
 
-  // Show connected MCPs if any
-  showConnectedMCPs();
+  // Detect connected MCPs to enrich the selector
+  const connectedMCPs = getConnectedMCPs();
 
   // Build the checkbox items list
   const pluginList = Object.values(plugins);
@@ -24,8 +24,13 @@ export async function init() {
     const alreadyEnabled = settings.sources[p.name]?.enabled;
     const noKey = Object.keys(p.requiredConfig).length === 0;
     let desc = "";
-    if (alreadyEnabled) desc = "already enabled";
-    else if (noKey) desc = "no API key needed";
+    if (alreadyEnabled) {
+      desc = "already enabled";
+    } else if (p.name === "mcp-bridge" && connectedMCPs.length > 0) {
+      desc = `${connectedMCPs.length} connected: ${connectedMCPs.join(", ")}`;
+    } else if (noKey) {
+      desc = "no API key needed";
+    }
     return {
       name: p.name,
       label: p.displayName,
@@ -97,7 +102,7 @@ export async function init() {
   console.log("");
 }
 
-function showConnectedMCPs() {
+function getConnectedMCPs() {
   const paths = [
     join(homedir(), ".claude", "settings.json"),
     join(homedir(), ".claude", "settings.local.json"),
@@ -108,20 +113,14 @@ function showConnectedMCPs() {
       try {
         const data = JSON.parse(readFileSync(p, "utf-8"));
         if (data.mcpServers && Object.keys(data.mcpServers).length > 0) {
-          const servers = Object.keys(data.mcpServers);
-          console.log(`${ANSI.gray}Detected ${servers.length} connected MCP server(s):${ANSI.reset}`);
-          for (const s of servers) {
-            console.log(`${ANSI.gray}  • ${s}${ANSI.reset}`);
-          }
-          console.log(`${ANSI.gray}  The MCP Bridge plugin can surface these automatically.${ANSI.reset}`);
-          console.log("");
-          return;
+          return Object.keys(data.mcpServers);
         }
       } catch {
         // ignore
       }
     }
   }
+  return [];
 }
 
 function formatResult(result) {
