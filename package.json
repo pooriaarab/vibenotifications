@@ -1,0 +1,28 @@
+{
+  "name": "vibenotifications",
+  "version": "0.1.0",
+  "description": "Customizable notifications for Claude Code -- GitHub PRs, Slack DMs, stock prices, and more while you code",
+  "type": "module",
+  "bin": {
+    "vibenotifications": "./bin/vibenotifications.js"
+  },
+  "files": [
+    "bin/",
+    "src/",
+    "README.md"
+  ],
+  "keywords": [
+    "claude-code",
+    "notifications",
+    "developer-tools",
+    "github",
+    "slack",
+    "productivity"
+  ],
+  "author": "Pooria Arab",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/pooriaarab/vibenotifications.git"
+  }
+}
