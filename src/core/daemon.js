@@ -51,21 +51,11 @@ export async function startDaemon() {
 
   const settings = loadSettings();
   const interval = settings.fetchInterval || 60;
-  const daemonScript = join(__dirname, "daemon.js");
+  const daemonLoopScript = join(__dirname, "daemon-loop.js");
 
   const child = spawn(
     process.execPath,
-    [
-      "--input-type=module",
-      "-e",
-      `
-      const mod = await import("file://${daemonScript.replace(/\\/g, "/")}");
-      while (true) {
-        try { await mod.fetchOnce(); } catch (e) { console.error(e); }
-        await new Promise(r => setTimeout(r, ${interval * 1000}));
-      }
-      `,
-    ],
+    [daemonLoopScript],
     {
       detached: true,
       stdio: "ignore",

@@ -21,6 +21,12 @@ export async function installHooks() {
     chmodSync(dest, "755");
   }
 
+  // Backup Claude Code settings before modifying
+  if (existsSync(CLAUDE_SETTINGS)) {
+    const backupPath = join(VN_DIR, "claude-settings.backup.json");
+    copyFileSync(CLAUDE_SETTINGS, backupPath);
+  }
+
   // Update Claude Code settings
   let settings = {};
   if (existsSync(CLAUDE_SETTINGS)) {
