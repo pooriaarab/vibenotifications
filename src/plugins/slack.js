@@ -5,8 +5,9 @@ export default {
 
   requiredConfig: {
     token: {
-      label: "Slack Bot Token (xoxb-...)",
+      label: "Slack Bot Token",
       type: "secret",
+      placeholder: "xoxb-...",
       instructions:
         "1. Go to api.slack.com/apps -> Create New App\n" +
         "   2. From Scratch -> name it 'vibenotifications'\n" +
@@ -14,6 +15,14 @@ export default {
         "      channels:history, channels:read, im:history, im:read, users:read\n" +
         "   4. Install to Workspace\n" +
         "   5. Copy the Bot User OAuth Token (xoxb-...)",
+      validate: (value) => {
+        if (!value) return "Slack Bot Token is required.";
+        if (!value.startsWith("xoxb-")) {
+          return "Slack Bot Token should start with 'xoxb-'. Make sure you're copying the Bot User OAuth Token, not the App Token.";
+        }
+        if (value.length < 30) return "Token looks too short. Make sure you copied the full token.";
+        return null;
+      },
     },
   },
 
@@ -29,7 +38,6 @@ export default {
   fetch: async (config) => {
     const notifications = [];
 
-    // Fetch recent DMs
     try {
       const convRes = await fetch("https://slack.com/api/conversations.list?types=im&limit=10", {
         headers: { Authorization: `Bearer ${config.token}` },
@@ -46,7 +54,6 @@ export default {
             const msg = histData.messages[0];
             const age = Date.now() / 1000 - parseFloat(msg.ts);
             if (age < 3600) {
-              // Only last hour
               notifications.push({
                 id: `slack-${channel.id}-${msg.ts}`,
                 source: "slack",

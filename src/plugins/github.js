@@ -7,11 +7,20 @@ export default {
     token: {
       label: "GitHub Personal Access Token",
       type: "secret",
+      placeholder: "ghp_... or github_pat_...",
       instructions:
         "1. Go to github.com/settings/tokens/new\n" +
         "   2. Name: vibenotifications\n" +
         "   3. Select scopes: notifications, repo\n" +
         "   4. Generate and copy the token",
+      validate: (value) => {
+        if (!value) return "Token is required.";
+        if (!value.startsWith("ghp_") && !value.startsWith("github_pat_")) {
+          return "Token should start with 'ghp_' or 'github_pat_'. Check that you copied the full token.";
+        }
+        if (value.length < 20) return "Token looks too short. Make sure you copied the full token.";
+        return null;
+      },
     },
   },
 
@@ -22,7 +31,7 @@ export default {
         "User-Agent": "vibenotifications",
       },
     });
-    if (!res.ok) throw new Error("Invalid GitHub token");
+    if (!res.ok) throw new Error("Invalid GitHub token — check scopes (needs: notifications, repo)");
     const user = await res.json();
     return { connected: true, user: user.login };
   },
