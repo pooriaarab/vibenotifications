@@ -31,6 +31,8 @@ Notifications appear across **5 Claude Code surfaces**:
 | **Email** | Unread count (placeholder) | Yes (IMAP) |
 | **Stocks/Crypto** | BTC, ETH, SOL, DOGE prices | No |
 | **MCP Bridge** | Connected MCP server status | No |
+| **Carbon Tracker** 🌱 | Live CO₂ estimate in status line (e.g. `🌱 85g CO₂ · ☕ boiling a kettle`) | No |
+| **Eco Mode** ♻️ | Injects token-saving prompt into Claude's context — cuts ~65% output tokens without quality loss | No |
 
 ## Setup
 
