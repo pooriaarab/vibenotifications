@@ -13,7 +13,7 @@ import { homedir } from "os";
 const SESSION_FILE = join(homedir(), ".vibenotifications", "carbon-session.json");
 
 // Default CO₂ rate used for threshold estimates when carbon plugin not configured
-const DEFAULT_CO2_RATE = 0.85; // claude-sonnet-4, g per 1K tokens
+const DEFAULT_CO2_RATE = 0.85; // claude-sonnet-4-6, g per 1K tokens (est.)
 
 const ECO_PROMPTS = {
   lite: `ECO MODE (lite): Drop filler words, pleasantries, hedging. Keep all technical substance. No trailing summaries of what you just did.`,
@@ -22,7 +22,7 @@ const ECO_PROMPTS = {
 - Compress output: drop filler, hedging, pleasantries. Fragments OK. 100% technical substance.
 - Batch tool calls: read multiple files in one message, not sequentially.
 - Avoid re-reading files you've already read this session.
-- For simple lookups/grepping: claude-haiku-3-5 uses 8.5x less CO2 than claude-sonnet-4 (0.10g vs 0.85g per 1K tokens). Flag sub-tasks that could use a smaller model.
+- For simple lookups/grepping: claude-haiku-4-5 uses 8.5x less CO2 than claude-sonnet-4-6 (0.10g vs 0.85g per 1K tokens). Flag sub-tasks that could use a smaller model.
 Pattern: [finding] [action] [reason]. No throat-clearing.`,
 
   ultra: `ECO MODE (ultra) — strict token discipline:

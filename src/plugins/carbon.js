@@ -6,16 +6,21 @@ const VN_DIR = join(homedir(), ".vibenotifications");
 const SESSION_FILE = join(VN_DIR, "carbon-session.json");
 const SESSION_MAX_AGE_MS = 8 * 60 * 60 * 1000; // 8 hours
 
-// gCO2 per 1,000 tokens — Jegham et al. arXiv:2505.09598 (2025)
+// gCO2 per 1,000 tokens (April 2026)
+// Claude 4.x: estimated from Jegham et al. arXiv:2505.09598 model-family scaling.
+// GPT/Mistral: Jegham et al. + Mistral LCA 2025 (Carbone 4/ADEME).
 const CO2_RATES = {
-  "claude-sonnet-4":      0.85,  // Claude Code default (2025-2026)
-  "claude-sonnet-3-7":    0.85,  // Claude 3.7 Sonnet
-  "claude-sonnet-3-5":    0.85,  // Claude 3.5 Sonnet
-  "claude-haiku-3-5":     0.10,  // Claude 3.5 Haiku
-  "claude-opus-3":        0.45,  // Claude 3 Opus
-  "gpt-4o":               0.37,
-  "gpt-4o-mini":          0.10,
-  "mistral-large":        2.85,
+  // Claude 4.x (April 2026) — est. from Jegham et al. arXiv:2505.09598 model-family scaling
+  "claude-sonnet-4-6":         0.85,  // Claude Code default (2026)
+  "claude-opus-4-7":           0.55,  // est.
+  "claude-haiku-4-5-20251001": 0.10,  // est.
+  // OpenAI (April 2026) — est. from Jegham et al. scaling
+  "gpt-5.4":                   0.50,
+  "gpt-5.4-mini":              0.12,
+  "o3":                        5.00,  // reasoning — chain-of-thought multiplier
+  "o4-mini":                   1.50,  // smaller reasoning model
+  // Mistral — benchmarked (Mistral LCA 2025, Carbone 4/ADEME)
+  "mistral-large":             2.85,
 };
 const VALID_MODELS = Object.keys(CO2_RATES);
 
@@ -69,8 +74,8 @@ function getOrCreateSession(model) {
     startTime: Date.now(),
     toolCallCount: 0,
     estimatedTokens: 0,
-    model: model || "claude-sonnet-4",
-    co2Rate: CO2_RATES[model] ?? CO2_RATES["claude-sonnet-4"],
+    model: model || "claude-sonnet-4-6",
+    co2Rate: CO2_RATES[model] ?? CO2_RATES["claude-sonnet-4-6"],
   };
   writeFileSync(SESSION_FILE, JSON.stringify(session));
   return session;
@@ -85,13 +90,13 @@ export default {
     model: {
       label: "Claude model you use in Claude Code",
       type: "string",
-      placeholder: "claude-sonnet-4",
+      placeholder: "claude-sonnet-4-6",
       instructions:
         `Model selects the CO₂ rate (Jegham et al. 2025, arXiv:2505.09598).\n` +
         `   Options: ${VALID_MODELS.join(", ")}\n` +
-        `   Press Enter to use default (claude-sonnet-4 = 0.85g/1K tokens)`,
+        `   Press Enter to use default (claude-sonnet-4-6 = 0.85g/1K tokens)`,
       validate: (value) => {
-        const v = value.trim() || "claude-sonnet-4";
+        const v = value.trim() || "claude-sonnet-4-6";
         if (!CO2_RATES[v]) return `Unknown model. Options: ${VALID_MODELS.join(", ")}`;
         return null;
       },
@@ -99,15 +104,15 @@ export default {
   },
 
   setup: async (config) => {
-    const model = (config.model || "claude-sonnet-4").trim();
+    const model = (config.model || "claude-sonnet-4-6").trim();
     config.model = model; // normalize
     getOrCreateSession(model);
     return { connected: true, tracking: `session CO₂ at ${CO2_RATES[model] ?? 0.85}g/1K tok` };
   },
 
   fetch: async (config) => {
-    const model = (config.model || "claude-sonnet-4").trim();
-    const rate = CO2_RATES[model] ?? CO2_RATES["claude-sonnet-4"];
+    const model = (config.model || "claude-sonnet-4-6").trim();
+    const rate = CO2_RATES[model] ?? CO2_RATES["claude-sonnet-4-6"];
     const session = getOrCreateSession(model);
 
     // Estimate tokens: each tool call ≈ 2,000 tokens (input context + output + response delta).
