@@ -5,7 +5,7 @@ import { textInput, ANSI } from "./prompts.js";
 export async function add(pluginName) {
   if (!pluginName) {
     console.log("Usage: vibenotifications add <plugin>");
-    console.log("Plugins: github, slack, x, email, stocks, mcp-bridge");
+    console.log("Plugins: github, slack, x, email, stocks, mcp-bridge, carbon, eco");
     return;
   }
 

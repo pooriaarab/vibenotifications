@@ -11,6 +11,7 @@ export async function installHooks() {
   // Copy hook scripts to ~/.vibenotifications/
   const hookFiles = [
     { src: join(__dirname, "../hooks/post-tool.js"), dest: join(VN_DIR, "hooks/post-tool.js") },
+    { src: join(__dirname, "../hooks/carbon-track.js"), dest: join(VN_DIR, "hooks/carbon-track.js") },
     { src: join(__dirname, "../hooks/session-start.js"), dest: join(VN_DIR, "hooks/session-start.js") },
     { src: join(__dirname, "../statusline.js"), dest: join(VN_DIR, "statusline.js") },
   ];
@@ -40,11 +41,18 @@ export async function installHooks() {
   settings.hooks.PostToolUse = settings.hooks.PostToolUse.filter((h) => !isVNHook(h));
   settings.hooks.PostToolUse.push({
     matcher: "Bash|Write|Edit|Read",
-    hooks: [{
-      type: "command",
-      command: `node ${join(VN_DIR, "hooks/post-tool.js")}`,
-      timeout: 3,
-    }],
+    hooks: [
+      {
+        type: "command",
+        command: `node ${join(VN_DIR, "hooks/post-tool.js")}`,
+        timeout: 3,
+      },
+      {
+        type: "command",
+        command: `node ${join(VN_DIR, "hooks/carbon-track.js")}`,
+        timeout: 2,
+      },
+    ],
   });
 
   // SessionStart hook

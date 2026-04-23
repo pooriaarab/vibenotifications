@@ -48,6 +48,19 @@ function run() {
     // Silent fail
   }
 
+  // forceInject: always inject (e.g. eco mode system prompt) — bypasses random gate
+  const forced = notifications.find((n) => n.forceInject && n.actionable);
+  if (forced) {
+    const safeTitle = sanitize(forced.title);
+    // forceInject sources are internal (not external API data) — allow longer body
+    const safeBody = sanitizeInternal(forced.body || "");
+    console.log(JSON.stringify({
+      additionalContext: `<vibenotifications-begin source="${sanitize(forced.source)}">${safeTitle}. ${safeBody}</vibenotifications-end> -- This is an active mode from vibenotifications. Follow these instructions.`,
+    }));
+    process.exit(0);
+    return;
+  }
+
   // Context injection for high-priority actionable items (30% of the time)
   if (Math.random() < 0.3) {
     const actionable = notifications.find((n) => n.actionable && (n.priority === "urgent" || n.priority === "high"));
@@ -72,4 +85,12 @@ function sanitize(str) {
     .replace(/[<>]/g, "")           // strip angle brackets
     .replace(/[\x00-\x1f]/g, "")    // strip control characters
     .slice(0, 200);                  // limit length
+}
+
+// For internal (non-external-API) sources — allow longer body for system prompt injection
+function sanitizeInternal(str) {
+  if (typeof str !== "string") return "";
+  return str
+    .replace(/[\x00-\x1f]/g, "")    // strip control characters only
+    .slice(0, 800);                  // longer limit for eco prompt
 }
