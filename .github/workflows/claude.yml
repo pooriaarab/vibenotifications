@@ -1,0 +1,332 @@
+name: Claude Code Review
+
+on:
+  pull_request:
+    types: [opened, synchronize, review_requested]
+    # Skip review for documentation-only changes (only applies to opened/synchronize)
+    paths-ignore:
+      - "**.md"
+      - "docs/**"
+      - ".github/**/*.md"
+      - ".claude/docs/**"
+
+# Cancel in-progress reviews when a new commit is pushed
+concurrency:
+  group: claude-review-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  # ─── Code Quality Review ───────────────────────────────────────────
+  claude-review:
+    # Skip for bot PRs, dependabot, and review_requested unless it's for claude[bot]
+    if: |
+      github.event.pull_request.user.login != 'dependabot[bot]' &&
+      github.event.pull_request.user.login != 'github-actions[bot]' &&
+      (github.event.action != 'review_requested' || github.event.requested_reviewer.login == 'claude[bot]')
+
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: write
+      pull-requests: write
+      issues: read
+      id-token: write
+      actions: read
+
+    steps:
+      - name: Request claude[bot] as reviewer
+        if: github.event.action == 'opened'
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          # Add claude[bot] as a requested reviewer so the re-request icon appears after review
+          gh api --method POST repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/requested_reviewers \
+            --input - <<< '{"reviewers":["claude[bot]"]}' || echo "Could not request claude[bot] as reviewer"
+
+      - name: Dismiss stale approval before re-review
+        if: github.event.action == 'synchronize' || github.event.action == 'review_requested'
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          # Find the last approval from the review bot and dismiss it
+          # Runs on both synchronize (new commits) and review_requested (refresh icon click)
+          # to prevent stale approvals from persisting through branch protection
+          REVIEWS=$(gh api repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/reviews 2>&1) || {
+            echo "Could not fetch reviews: $REVIEWS"
+            exit 0
+          }
+
+          REVIEW_ID=$(echo "$REVIEWS" | jq -r '[.[] | select((.user.login == "claude[bot]" or .user.login == "github-actions[bot]") and .state == "APPROVED")] | last | .id // empty')
+
+          if [ -n "$REVIEW_ID" ] && [ "$REVIEW_ID" != "null" ]; then
+            gh api --method PUT repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/reviews/$REVIEW_ID/dismissals \
+              -f message="Dismissed: re-reviewing PR..." || {
+              echo "Failed to dismiss review $REVIEW_ID — may require admin permissions or branch protection change"
+            }
+            echo "Dismissed stale approval (review $REVIEW_ID)"
+          else
+            echo "No stale approval to dismiss"
+          fi
+
+      - name: Checkout PR branch
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.pull_request.head.ref }}
+
+      - name: Check automated fix cycle count
+        id: cycle
+        run: |
+          # Count consecutive commits from claude[bot] at HEAD
+          COUNT=0
+          for SHA in $(git log --format='%H' -10); do
+            AUTHOR=$(git log -1 --format='%an' "$SHA")
+            if [[ "$AUTHOR" == "claude[bot]" ]]; then
+              COUNT=$((COUNT + 1))
+            else
+              break
+            fi
+          done
+          echo "claude_commits=$COUNT" >> $GITHUB_OUTPUT
+          # After 5 consecutive automated fix cycles, stop pushing fixes to prevent infinite loops
+          if [[ $COUNT -ge 5 ]]; then
+            echo "can_push_fixes=false" >> $GITHUB_OUTPUT
+          else
+            echo "can_push_fixes=true" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Configure git
+        run: |
+          git config user.name "claude[bot]"
+          git config user.email "claude[bot]@users.noreply.github.com"
+
+      - name: Record HEAD before review
+        id: before-review
+        run: echo "sha=$(git rev-parse HEAD)" >> $GITHUB_OUTPUT
+
+      - name: Run Claude Code Review
+        id: claude-review
+        uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          use_commit_signing: true
+          settings: ".claude/settings.json"
+          prompt: |
+            You are reviewing PR #${{ github.event.pull_request.number }} in ${{ github.repository }}.
+            PR branch: ${{ github.event.pull_request.head.ref }}
+            Automated fix cycles so far: ${{ steps.cycle.outputs.claude_commits }}
+            Can push fixes: ${{ steps.cycle.outputs.can_push_fixes }}
+
+            ## Instructions
+            1. Get the PR diff: `gh pr diff ${{ github.event.pull_request.number }}`
+            2. Read the CLAUDE.md file for project conventions and code standards
+            3. Review the full diff for: bugs, security issues, performance problems, code quality, convention violations
+            4. If this is a re-review (automated fix cycles > 0), verify previous fixes are correct and check for remaining issues
+            5. Determine your verdict:
+               - **✅ Approved** — No significant issues found
+               - **⚠️ Changes Requested** — Security vulnerabilities, crashes, data loss bugs, or convention violations that must be fixed
+               - **💬 Comment** — Non-blocking suggestions
+
+            ## Step 1: Fix Issues (only if "Can push fixes" is true)
+
+            If you find clear, unambiguous issues you can confidently fix AND "Can push fixes" is true:
+
+            1. Make the code changes using Edit/Write tools
+            2. Verify your changes are correct by reading the modified files
+            3. Commit and push:
+               ```bash
+               git add -A && git commit -m "fix: <description of review fixes>" && git push origin ${{ github.event.pull_request.head.ref }}
+               ```
+
+            Fix these types of issues:
+            - Security vulnerabilities
+            - Clear bugs and logic errors
+            - Missing input validation
+            - Convention violations from CLAUDE.md (naming, imports, patterns)
+
+            Do NOT push fixes for:
+            - Style preferences or subjective choices
+            - Architectural decisions needing discussion
+            - Changes that could break functionality without test coverage
+
+            If "Can push fixes" is false, skip this step entirely — just leave comments.
+
+            ## Step 2: Post Inline Comments
+
+            For each significant issue, post an inline comment on the specific line:
+
+            ```bash
+            gh api repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/comments \
+              -f body="COMMENT_BODY" \
+              -f commit_id="$(gh pr view ${{ github.event.pull_request.number }} --json headRefOid -q .headRefOid)" \
+              -f path="FILE_PATH" \
+              -f side="RIGHT" \
+              -F line=LINE_NUMBER
+            ```
+
+            Inline comment format:
+            ```
+            **🔴 Security** | **Critical**
+
+            Brief description (1-2 sentences).
+
+            \`\`\`suggestion
+            // Suggested fix code
+            \`\`\`
+
+            ✅ Fixed in `<short-sha>` ← include ONLY if you pushed a fix for this issue
+            ```
+
+            Severity levels:
+            - 🔴 **Critical** — Security, crashes, data loss
+            - 🟠 **Warning** — Bugs, race conditions, logic errors
+            - 🟡 **Suggestion** — Performance, quality, best practices
+
+            ## Step 3: Submit Review
+
+            Submit a proper GitHub pull request review using `gh pr review` (NOT `gh pr comment`).
+            This controls what shows in the Reviewers sidebar (Approved vs Commented vs Changes Requested).
+
+            **If ✅ Approved:**
+            ```bash
+            gh pr review ${{ github.event.pull_request.number }} --approve --body "$(cat <<'EOF'
+            ## ✅ Approved
+
+            <details>
+            <summary>Review Summary</summary>
+
+            | Severity | Count |
+            |----------|-------|
+            | 🔴 Critical | 0 |
+            | 🟠 Warning | 0 |
+            | 🟡 Suggestion | X |
+
+            </details>
+
+            <details>
+            <summary>What looks good</summary>
+
+            - Point 1
+            - Point 2
+
+            </details>
+
+            ---
+            <sub>Reviewed by [Claude Code](https://claude.ai/code) · [View comments](https://github.com/${{ github.repository }}/pull/${{ github.event.pull_request.number }}/files)</sub>
+            EOF
+            )"
+            ```
+
+            **If ⚠️ Changes Requested:**
+            ```bash
+            gh pr review ${{ github.event.pull_request.number }} --request-changes --body "$(cat <<'EOF'
+            ## ⚠️ Changes Requested
+
+            [Brief explanation of blocking issues]
+            [If fixes pushed: "🔧 Pushed automated fix: `<sha>` — please review."]
+
+            <details>
+            <summary>Review Summary</summary>
+
+            | Severity | Count |
+            |----------|-------|
+            | 🔴 Critical | X |
+            | 🟠 Warning | X |
+            | 🟡 Suggestion | X |
+
+            </details>
+
+            ---
+            <sub>Reviewed by [Claude Code](https://claude.ai/code) · [View comments](https://github.com/${{ github.repository }}/pull/${{ github.event.pull_request.number }}/files)</sub>
+            EOF
+            )"
+            ```
+
+            **If 💬 Comment:**
+            ```bash
+            gh pr review ${{ github.event.pull_request.number }} --comment --body "$(cat <<'EOF'
+            ## 💬 Comment
+
+            [Non-blocking observations]
+            [If fixes pushed: "🔧 Pushed automated fix: `<sha>` — please review."]
+
+            <details>
+            <summary>Review Summary</summary>
+
+            | Severity | Count |
+            |----------|-------|
+            | 🔴 Critical | 0 |
+            | 🟠 Warning | X |
+            | 🟡 Suggestion | X |
+
+            </details>
+
+            ---
+            <sub>Reviewed by [Claude Code](https://claude.ai/code) · [View comments](https://github.com/${{ github.repository }}/pull/${{ github.event.pull_request.number }}/files)</sub>
+            EOF
+            )"
+            ```
+
+            ## Rules
+            - Max 10 inline comments
+            - Use `suggestion` code blocks for fixable issues — GitHub shows "Apply suggestion" button
+            - Only use ⚠️ Changes Requested for security vulnerabilities, crash/data-loss bugs, or clear convention violations
+            - Keep inline comments concise (under 10 lines)
+            - If PR looks good, skip inline comments and submit ✅ Approved directly
+            - Always mention pushed fix commits in the summary review body
+            - On re-reviews, verify previous automated fixes are correct before approving
+            - NEVER approve in the same run where you pushed fixes — submit 💬 Comment instead, so the next run independently verifies your changes
+
+          claude_args: '--model claude-opus-4-6 --allowed-tools "Bash(gh api:*),Bash(gh pr diff:*),Bash(gh pr view:*),Bash(gh pr comment:*),Bash(gh pr review:*),Bash(gh pr list:*),Bash(git:*),Bash(jq:*),Bash(cat:*),Read,Glob,Grep,Edit,Write"'
+
+      - name: Trigger re-review if fixes were pushed
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ secrets.REVIEW_TRIGGER_PAT || github.token }}
+        run: |
+          CURRENT_SHA=$(git rev-parse HEAD)
+          if [ "$CURRENT_SHA" != "${{ steps.before-review.outputs.sha }}" ]; then
+            echo "Claude pushed fixes (${{ steps.before-review.outputs.sha }} → $CURRENT_SHA)"
+            echo "Re-requesting review from claude[bot] to trigger verification run..."
+            # Uses REVIEW_TRIGGER_PAT (a PAT) to trigger a new workflow run.
+            # GITHUB_TOKEN events don't trigger workflows, so a PAT is required.
+            # If no PAT is configured, this still succeeds but won't trigger a new run —
+            # the user can click the refresh icon manually instead.
+            gh api --method POST repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/requested_reviewers \
+              --input - <<< '{"reviewers":["claude[bot]"]}'
+          else
+            echo "No fixes pushed — no re-review needed"
+          fi
+
+  # ─── Security Review (OWASP-aligned) ──────────────────────────────
+  security-review:
+    # Skip for bot PRs, dependabot, and re-request events (only claude-review handles those)
+    if: |
+      github.event.action != 'review_requested' &&
+      github.event.pull_request.user.login != 'dependabot[bot]' &&
+      github.event.pull_request.user.login != 'github-actions[bot]'
+
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      pull-requests: write
+
+    steps:
+      - name: Checkout PR head
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 2
+
+      - name: Run Claude Security Review
+        uses: anthropics/claude-code-security-review@main
+        with:
+          claude-api-key: ${{ secrets.ANTHROPIC_API_KEY }}
+          comment-pr: true
+          upload-results: true
+          claude-model: claude-opus-4-6
+          claudecode-timeout: 15
+          exclude-directories: "node_modules,.next,dist,coverage"
