@@ -1,6 +1,7 @@
-import { readFileSync, writeFileSync, mkdirSync, existsSync } from "fs";
+import { readFileSync, mkdirSync, existsSync } from "fs";
 import { join } from "path";
 import { homedir } from "os";
+import { atomicWriteFileSync } from "./atomic-write.js";
 
 const VN_DIR = join(homedir(), ".vibenotifications");
 const SETTINGS_FILE = join(VN_DIR, "settings.json");
@@ -19,12 +20,19 @@ export function loadSettings() {
   if (!existsSync(SETTINGS_FILE)) {
     return getDefaultSettings();
   }
-  return JSON.parse(readFileSync(SETTINGS_FILE, "utf-8"));
+  try {
+    return JSON.parse(readFileSync(SETTINGS_FILE, "utf-8"));
+  } catch {
+    // Truncated/corrupt store file (e.g. crash mid-write) — fall back to
+    // defaults instead of crashing every CLI command and wedging the daemon
+    // in an infinite catch loop.
+    return getDefaultSettings();
+  }
 }
 
 export function saveSettings(settings) {
   ensureDir();
-  writeFileSync(SETTINGS_FILE, JSON.stringify(settings, null, 2));
+  atomicWriteFileSync(SETTINGS_FILE, JSON.stringify(settings, null, 2));
 }
 
 export function getDefaultSettings() {
@@ -51,10 +59,14 @@ export function loadNotifications() {
   if (!existsSync(NOTIFICATIONS_FILE)) {
     return [];
   }
-  return JSON.parse(readFileSync(NOTIFICATIONS_FILE, "utf-8"));
+  try {
+    return JSON.parse(readFileSync(NOTIFICATIONS_FILE, "utf-8"));
+  } catch {
+    return [];
+  }
 }
 
 export function saveNotifications(notifications) {
   ensureDir();
-  writeFileSync(NOTIFICATIONS_FILE, JSON.stringify(notifications, null, 2));
+  atomicWriteFileSync(NOTIFICATIONS_FILE, JSON.stringify(notifications, null, 2));
 }

@@ -1,8 +1,9 @@
-import { readFileSync, writeFileSync, existsSync } from "fs";
+import { readFileSync, existsSync } from "fs";
 import { join } from "path";
 import { homedir } from "os";
 import { filterByMinPriority, sortByPriority } from "./queue.js";
 import { VN_DIR } from "./config.js";
+import { atomicWriteFileSync } from "./atomic-write.js";
 
 const CLAUDE_SETTINGS = join(homedir(), ".claude", "settings.json");
 const CURRENT_NOTIFICATION = join(VN_DIR, "current-notification.json");
@@ -41,7 +42,7 @@ function updateSpinnerVerbs(notifications, config, priorityConfig) {
 
     if (verbs.length > 0) {
       settings.spinnerVerbs = { mode: "replace", verbs };
-      writeFileSync(CLAUDE_SETTINGS, JSON.stringify(settings, null, 2));
+      atomicWriteFileSync(CLAUDE_SETTINGS, JSON.stringify(settings, null, 2));
     }
   } catch {
     // Never break Claude Code
@@ -50,7 +51,7 @@ function updateSpinnerVerbs(notifications, config, priorityConfig) {
 
 function updateStatusLine(notification) {
   try {
-    writeFileSync(
+    atomicWriteFileSync(
       CURRENT_NOTIFICATION,
       JSON.stringify({
         notification,
@@ -62,42 +63,9 @@ function updateStatusLine(notification) {
   }
 }
 
-export function getSessionSummary(notifications) {
-  if (!notifications.length) return null;
-
-  const bySource = {};
-  for (const n of notifications) {
-    if (!bySource[n.source]) bySource[n.source] = [];
-    bySource[n.source].push(n);
-  }
-
-  const lines = ["[vibenotifications] Here's what you missed:"];
-  for (const [source, notifs] of Object.entries(bySource)) {
-    const urgent = notifs.filter((n) => n.priority === "urgent" || n.priority === "high");
-    if (urgent.length > 0) {
-      lines.push(`  - ${source}: ${notifs.length} notifications (${urgent.length} important: ${urgent[0].title})`);
-    } else {
-      lines.push(`  - ${source}: ${notifs.length} notifications`);
-    }
-  }
-
-  return lines.join("\n");
-}
-
-export function getContextInjection(notifications, priorityConfig) {
-  const filtered = filterByMinPriority(notifications, priorityConfig.minContextInjection || "high");
-  const actionable = filtered.filter((n) => n.actionable);
-
-  if (actionable.length === 0) return null;
-
-  const top = actionable[0];
-  const safeTitle = sanitize(top.title);
-  const safeBody = sanitize(top.body || "");
-  const safeUrl = top.url && /^https?:\/\//.test(top.url) ? top.url : "";
-  return `<vibenotifications-begin source="${sanitize(top.source)}">${safeTitle}. ${safeBody}${safeUrl ? " Link: " + safeUrl : ""}</vibenotifications-end> -- This is a notification. Mention only if relevant.`;
-}
-
-function sanitize(str) {
-  if (typeof str !== "string") return "";
-  return str.replace(/[<>]/g, "").replace(/[\x00-\x1f]/g, "").slice(0, 200);
-}
+// Session-summary and context-injection surfaces are owned by the hook files
+// (src/hooks/session-start.js, src/hooks/post-tool.js), not this module —
+// those hooks run standalone (copied out of the dev tree, can't import from
+// core/) and have since evolved (forceInject support) independently of the
+// versions that used to live here. Keeping both around was dead code drifting
+// from the real implementation.
