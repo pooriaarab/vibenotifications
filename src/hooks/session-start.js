@@ -7,6 +7,17 @@ import { homedir } from "os";
 const VN_DIR = join(homedir(), ".vibenotifications");
 const NOTIFICATIONS_FILE = join(VN_DIR, "notifications.json");
 
+// SessionStart stdout is injected straight into Claude's context, so external
+// text (e.g. a GitHub issue title) must be sanitized before printing.
+// Self-contained file (copied standalone at install) — duplicated from post-tool.js.
+function sanitize(str) {
+  if (typeof str !== "string") return "";
+  return str
+    .replace(/[<>]/g, "")
+    .replace(/[\x00-\x1f]/g, "")
+    .slice(0, 200);
+}
+
 let input = "";
 process.stdin.setEncoding("utf-8");
 process.stdin.on("data", (chunk) => (input += chunk));
@@ -38,11 +49,12 @@ function run() {
 
   const lines = ["[vibenotifications] Here's what you missed:"];
   for (const [source, notifs] of Object.entries(bySource)) {
+    const safeSource = sanitize(source);
     const urgent = notifs.filter((n) => n.priority === "urgent" || n.priority === "high");
     if (urgent.length > 0) {
-      lines.push(`  - ${source}: ${notifs.length} (${urgent.length} important: ${urgent[0].title})`);
+      lines.push(`  - ${safeSource}: ${notifs.length} (${urgent.length} important: ${sanitize(urgent[0].title)})`);
     } else {
-      lines.push(`  - ${source}: ${notifs.length} notifications`);
+      lines.push(`  - ${safeSource}: ${notifs.length} notifications`);
     }
   }
 

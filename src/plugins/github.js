@@ -48,21 +48,20 @@ export default {
       if (!res.ok) return [];
       const data = await res.json();
 
-      // Filter out malformed entries (e.g. missing subject/repository) instead
-      // of letting one bad notification throw inside .map() and drop the
-      // whole fetch cycle — same defensive shape as the other plugins.
-      return data
-        .filter((n) => n?.subject?.title && n?.repository?.full_name)
-        .map((n) => ({
+      return data.map((n) => {
+        const reason = n.reason ?? "notification";
+        const repoName = n.repository?.full_name ?? "unknown repo";
+        return {
           id: `github-${n.id}`,
           source: "github",
-          title: n.subject.title,
-          body: `${n.reason} in ${n.repository.full_name}`,
-          url: n.repository.html_url,
-          priority: n.reason === "review_requested" || n.reason === "ci_activity" ? "high" : "normal",
+          title: n.subject?.title ?? "(no title)",
+          body: `${reason} in ${repoName}`,
+          url: n.repository?.html_url ?? "",
+          priority: reason === "review_requested" || reason === "ci_activity" ? "high" : "normal",
           timestamp: n.updated_at,
-          actionable: n.reason === "review_requested" || n.reason === "ci_activity",
-        }));
+          actionable: reason === "review_requested" || reason === "ci_activity",
+        };
+      });
     } catch {
       // Silent fail — same pattern as every other plugin's fetch()
       return [];

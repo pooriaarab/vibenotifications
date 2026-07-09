@@ -1,4 +1,4 @@
-import { readFileSync, existsSync, copyFileSync, chmodSync, mkdirSync } from "fs";
+import { readFileSync, existsSync, copyFileSync, chmodSync, mkdirSync, unlinkSync } from "fs";
 import { join, dirname } from "path";
 import { homedir } from "os";
 import { fileURLToPath } from "url";
@@ -82,13 +82,29 @@ export async function installHooks() {
     }],
   });
 
-  // Status line
+  // Status line — back up any pre-existing custom statusLine (not ours) so
+  // removeHooks can restore it later instead of deleting it.
+  const statusLineBackupPath = join(VN_DIR, "statusline.orig.json");
+  if (
+    settings.statusLine &&
+    !settings.statusLine.command?.includes(".vibenotifications") &&
+    !existsSync(statusLineBackupPath)
+  ) {
+    atomicWriteFileSync(statusLineBackupPath, JSON.stringify(settings.statusLine, null, 2), { mode: 0o600 });
+  }
   settings.statusLine = {
     type: "command",
     command: `node ${join(VN_DIR, "statusline.js")}`,
   };
 
-  atomicWriteFileSync(CLAUDE_SETTINGS, JSON.stringify(settings, null, 2));
+  // Same backup/restore treatment for spinnerVerbs — it gets overwritten at
+  // runtime (surfaces.js), so snapshot the user's original value now.
+  const spinnerVerbsBackupPath = join(VN_DIR, "spinner-verbs.orig.json");
+  if (settings.spinnerVerbs && !existsSync(spinnerVerbsBackupPath)) {
+    atomicWriteFileSync(spinnerVerbsBackupPath, JSON.stringify(settings.spinnerVerbs, null, 2), { mode: 0o600 });
+  }
+
+  atomicWriteFileSync(CLAUDE_SETTINGS, JSON.stringify(settings, null, 2), { mode: 0o600 });
 }
 
 export async function removeHooks() {
@@ -103,13 +119,26 @@ export async function removeHooks() {
   }
 
   if (settings.statusLine?.command?.includes(".vibenotifications")) {
-    delete settings.statusLine;
+    const statusLineBackupPath = join(VN_DIR, "statusline.orig.json");
+    if (existsSync(statusLineBackupPath)) {
+      settings.statusLine = JSON.parse(readFileSync(statusLineBackupPath, "utf-8"));
+      unlinkSync(statusLineBackupPath);
+    } else {
+      delete settings.statusLine;
+    }
   }
 
-  // Restore spinner verbs
-  delete settings.spinnerVerbs;
+  // Restore the user's original spinnerVerbs if we backed one up, otherwise
+  // just remove ours.
+  const spinnerVerbsBackupPath = join(VN_DIR, "spinner-verbs.orig.json");
+  if (existsSync(spinnerVerbsBackupPath)) {
+    settings.spinnerVerbs = JSON.parse(readFileSync(spinnerVerbsBackupPath, "utf-8"));
+    unlinkSync(spinnerVerbsBackupPath);
+  } else {
+    delete settings.spinnerVerbs;
+  }
 
-  atomicWriteFileSync(CLAUDE_SETTINGS, JSON.stringify(settings, null, 2));
+  atomicWriteFileSync(CLAUDE_SETTINGS, JSON.stringify(settings, null, 2), { mode: 0o600 });
 }
 
 function isVNHook(hookGroup) {
