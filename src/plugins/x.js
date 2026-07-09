@@ -49,7 +49,7 @@ export default {
     try {
       const res = await fetch(
         `https://api.x.com/2/users/${config.userId}/mentions?max_results=10&tweet.fields=created_at,author_id,text`,
-        { headers: { Authorization: `Bearer ${config.bearerToken}` } }
+        { headers: { Authorization: `Bearer ${config.bearerToken}` }, signal: AbortSignal.timeout(10_000) }
       );
       if (res.ok) {
         const data = await res.json();

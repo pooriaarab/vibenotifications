@@ -39,7 +39,7 @@ export default {
 
   setup: async (config) => {
     try {
-      const res = await fetch(config.icsUrl);
+      const res = await fetch(config.icsUrl, { signal: AbortSignal.timeout(10_000) });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const text = await res.text();
       if (!text.includes("BEGIN:VCALENDAR")) {
@@ -61,7 +61,7 @@ export default {
 
 async function fetchICSEvents(url, lookahead, source) {
   try {
-    const res = await fetch(url);
+    const res = await fetch(url, { signal: AbortSignal.timeout(10_000) });
     if (!res.ok) return [];
     const icsText = await res.text();
 

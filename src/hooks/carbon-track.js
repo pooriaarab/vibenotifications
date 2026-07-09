@@ -3,9 +3,12 @@
 // Each tool call ~= 2,000 tokens (input context + tool output + response delta).
 // Runs after every Claude Code tool use — lightweight, silent on error.
 
-import { readFileSync, writeFileSync, existsSync, mkdirSync } from "fs";
+import { readFileSync, existsSync, mkdirSync } from "fs";
 import { join } from "path";
 import { homedir } from "os";
+// Copied alongside this file into ~/.vibenotifications/core/ by
+// core/hooks.js installHooks — see that file for the copy list.
+import { atomicWriteFileSync } from "../core/atomic-write.js";
 
 const VN_DIR = join(homedir(), ".vibenotifications");
 const SESSION_FILE = join(VN_DIR, "carbon-session.json");
@@ -30,7 +33,7 @@ try {
   session.toolCallCount = (session.toolCallCount || 0) + 1;
   session.estimatedTokens = session.toolCallCount * 2000;
 
-  writeFileSync(SESSION_FILE, JSON.stringify(session));
+  atomicWriteFileSync(SESSION_FILE, JSON.stringify(session));
 } catch {
   // Never crash — hooks must be silent on failure
 }

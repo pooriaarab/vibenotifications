@@ -37,5 +37,6 @@ export async function dashboard() {
   const daemonRunning = existsSync(pidFile);
   console.log(`Daemon:     ${daemonRunning ? "running" : "stopped"}`);
   console.log(`Interval:   ${settings.fetchInterval}s`);
+  if (daemonRunning) console.log(`Log:        ${join(VN_DIR, "daemon.log")}`);
   console.log("");
 }

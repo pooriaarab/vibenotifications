@@ -1,9 +1,16 @@
 const PRIORITY_ORDER = { urgent: 0, high: 1, normal: 2, low: 3 };
 
 export function deduplicateNotifications(existing, incoming) {
-  const seen = new Set(existing.map((n) => n.id));
-  const newOnes = incoming.filter((n) => !seen.has(n.id));
-  return [...newOnes, ...existing];
+  // Upsert by id: incoming notifications refresh the content of a matching
+  // existing id (e.g. carbon's live session total) instead of piling up as
+  // separate entries next to a stale copy.
+  const byId = new Map(existing.map((n) => [n.id, n]));
+  const newOnes = [];
+  for (const n of incoming) {
+    if (byId.has(n.id)) byId.set(n.id, n);
+    else newOnes.push(n);
+  }
+  return [...newOnes, ...byId.values()];
 }
 
 export function sortByPriority(notifications) {

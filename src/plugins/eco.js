@@ -9,11 +9,13 @@
 import { readFileSync, existsSync } from "fs";
 import { join } from "path";
 import { homedir } from "os";
+import { CO2_RATES, DEFAULT_CO2_RATE } from "../core/co2-rates.js";
 
 const SESSION_FILE = join(homedir(), ".vibenotifications", "carbon-session.json");
 
-// Default CO₂ rate used for threshold estimates when carbon plugin not configured
-const DEFAULT_CO2_RATE = 0.85; // claude-sonnet-4-6, g per 1K tokens (est.)
+// Ratio used in the eco prompt copy below — derived from the shared rate
+// table so it can't drift independently of carbon.js/statusline.js.
+const HAIKU_SAVINGS_X = (CO2_RATES["claude-sonnet-4-6"] / CO2_RATES["claude-haiku-4-5-20251001"]).toFixed(1);
 
 const ECO_PROMPTS = {
   lite: `ECO MODE (lite): Drop filler words, pleasantries, hedging. Keep all technical substance. No trailing summaries of what you just did.`,
@@ -22,14 +24,14 @@ const ECO_PROMPTS = {
 - Compress output: drop filler, hedging, pleasantries. Fragments OK. 100% technical substance.
 - Batch tool calls: read multiple files in one message, not sequentially.
 - Avoid re-reading files you've already read this session.
-- For simple lookups/grepping: claude-haiku-4-5 uses 8.5x less CO2 than claude-sonnet-4-6 (0.10g vs 0.85g per 1K tokens). Flag sub-tasks that could use a smaller model.
+- For simple lookups/grepping: claude-haiku-4-5 uses ${HAIKU_SAVINGS_X}x less CO2 than claude-sonnet-4-6 (${CO2_RATES["claude-haiku-4-5-20251001"]}g vs ${CO2_RATES["claude-sonnet-4-6"]}g per 1K tokens). Flag sub-tasks that could use a smaller model.
 Pattern: [finding] [action] [reason]. No throat-clearing.`,
 
   ultra: `ECO MODE (ultra) — strict token discipline:
 - Terse output only. Pattern: [thing] [action] [reason]. [next step]. Fragments. No filler.
 - Batch ALL tool calls. Never read a file twice.
 - Before each tool call: ask "is this necessary?" Skip git status unless asked.
-- Flag model downgrade opportunities: Haiku=0.10g/1Ktok, Sonnet=0.85g/1Ktok, Opus=0.45g/1Ktok.
+- Flag model downgrade opportunities: Haiku=${CO2_RATES["claude-haiku-4-5-20251001"]}g/1Ktok, Sonnet=${CO2_RATES["claude-sonnet-4-6"]}g/1Ktok, Opus=${CO2_RATES["claude-opus-4-7"]}g/1Ktok.
 - No summaries. No "I'll now...". No "Great, I've...". Just the output.
 CAVEMAN RULE: why use many token when few do trick.`,
 };
