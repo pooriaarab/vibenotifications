@@ -1,4 +1,6 @@
-import { loadNotifications, loadSettings } from "../core/config.js";
+import { join } from "path";
+
+import { VN_DIR, loadNotifications, loadSettings } from "../core/config.js";
 import { isDaemonRunning } from "../core/daemon.js";
 
 export async function dashboard() {
