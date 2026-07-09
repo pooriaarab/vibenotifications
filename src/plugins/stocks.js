@@ -53,7 +53,7 @@ export default {
               const change = info.usd_24h_change?.toFixed(1) || "0.0";
               const arrow = parseFloat(change) >= 0 ? "+" : "";
               notifications.push({
-                id: `stocks-${symbol}-${Date.now()}`,
+                id: `stocks-${symbol}-${Math.floor(Date.now() / (5 * 60000))}`,
                 source: "stocks",
                 title: `${symbol.toUpperCase()}: $${info.usd.toLocaleString()} (${arrow}${change}%)`,
                 body: `24h change: ${arrow}${change}%`,
@@ -72,7 +72,7 @@ export default {
 
     for (const symbol of stockSymbols) {
       notifications.push({
-        id: `stocks-${symbol}-${Date.now()}`,
+        id: `stocks-${symbol}-${Math.floor(Date.now() / (5 * 60000))}`,
         source: "stocks",
         title: `${symbol.toUpperCase()}: price tracking requires API key (coming soon)`,
         body: "Stock price tracking via Alpha Vantage coming in next release",
