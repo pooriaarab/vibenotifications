@@ -151,5 +151,7 @@ Docs for the contract: `docs/creating-plugins.md`. Design history:
 ## Known open findings
 
 Concrete file:line-referenced bugs, security issues, and architecture work are
-catalogued in `docs/fable-findings/` (bugs.md, security.md, architecture.md).
+catalogued in `docs/fable-findings/` (bugs.md, security.md, architecture.md,
+and round2-*.md — round 2 re-verified all of round 1 still open as of
+`617afd6`/v0.5.2 and added B14–B16; nothing has shipped from either round yet).
 Check there before re-diagnosing anything that looks off.
