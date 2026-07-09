@@ -37,24 +37,35 @@ export default {
   },
 
   fetch: async (config) => {
-    const res = await fetch("https://api.github.com/notifications", {
-      headers: {
-        Authorization: `Bearer ${config.token}`,
-        "User-Agent": "vibenotifications",
-      },
-    });
-    if (!res.ok) return [];
-    const data = await res.json();
+    try {
+      const res = await fetch("https://api.github.com/notifications", {
+        headers: {
+          Authorization: `Bearer ${config.token}`,
+          "User-Agent": "vibenotifications",
+        },
+        signal: AbortSignal.timeout(10_000),
+      });
+      if (!res.ok) return [];
+      const data = await res.json();
 
-    return data.map((n) => ({
-      id: `github-${n.id}`,
-      source: "github",
-      title: n.subject.title,
-      body: `${n.reason} in ${n.repository.full_name}`,
-      url: n.repository.html_url,
-      priority: n.reason === "review_requested" || n.reason === "ci_activity" ? "high" : "normal",
-      timestamp: n.updated_at,
-      actionable: n.reason === "review_requested" || n.reason === "ci_activity",
-    }));
+      // Filter out malformed entries (e.g. missing subject/repository) instead
+      // of letting one bad notification throw inside .map() and drop the
+      // whole fetch cycle — same defensive shape as the other plugins.
+      return data
+        .filter((n) => n?.subject?.title && n?.repository?.full_name)
+        .map((n) => ({
+          id: `github-${n.id}`,
+          source: "github",
+          title: n.subject.title,
+          body: `${n.reason} in ${n.repository.full_name}`,
+          url: n.repository.html_url,
+          priority: n.reason === "review_requested" || n.reason === "ci_activity" ? "high" : "normal",
+          timestamp: n.updated_at,
+          actionable: n.reason === "review_requested" || n.reason === "ci_activity",
+        }));
+    } catch {
+      // Silent fail — same pattern as every other plugin's fetch()
+      return [];
+    }
   },
 };
