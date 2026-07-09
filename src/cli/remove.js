@@ -1,4 +1,4 @@
-import { loadSettings, saveSettings } from "../core/config.js";
+import { loadSettings, saveSettings, loadNotifications, saveNotifications } from "../core/config.js";
 
 export async function remove(pluginName) {
   if (!pluginName) {
@@ -10,6 +10,7 @@ export async function remove(pluginName) {
   if (settings.sources[pluginName]) {
     delete settings.sources[pluginName];
     saveSettings(settings);
+    saveNotifications(loadNotifications().filter((n) => n.source !== pluginName));
     console.log(`Removed ${pluginName}.`);
   } else {
     console.log(`${pluginName} is not enabled.`);

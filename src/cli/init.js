@@ -70,6 +70,7 @@ export async function init() {
       const value = await textInput(schema.label, {
         placeholder: schema.placeholder,
         validate: schema.validate,
+        mask: schema.type === "secret",
       });
 
       pluginConfig[key] = value;

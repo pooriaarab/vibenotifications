@@ -1,6 +1,7 @@
-import { loadNotifications, loadSettings, VN_DIR } from "../core/config.js";
-import { existsSync } from "fs";
 import { join } from "path";
+
+import { VN_DIR, loadNotifications, loadSettings } from "../core/config.js";
+import { isDaemonRunning } from "../core/daemon.js";
 
 export async function dashboard() {
   const settings = loadSettings();
@@ -33,8 +34,7 @@ export async function dashboard() {
   const enabledSources = Object.entries(settings.sources).filter(([, c]) => c.enabled).map(([n]) => n);
   console.log(`Sources:    ${enabledSources.join(", ") || "none"}`);
 
-  const pidFile = join(VN_DIR, "daemon.pid");
-  const daemonRunning = existsSync(pidFile);
+  const daemonRunning = isDaemonRunning();
   console.log(`Daemon:     ${daemonRunning ? "running" : "stopped"}`);
   console.log(`Interval:   ${settings.fetchInterval}s`);
   if (daemonRunning) console.log(`Log:        ${join(VN_DIR, "daemon.log")}`);

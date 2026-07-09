@@ -108,7 +108,7 @@ export default {
 
     return [
       {
-        id: `email-unread-${Date.now()}`,
+        id: `email-unread-${Math.floor(Date.now() / (5 * 60000))}`,
         source: "email",
         title: `Email: check ${config.email} for unread messages`,
         body: "Full IMAP integration coming soon. For now, this is a reminder to check your inbox.",

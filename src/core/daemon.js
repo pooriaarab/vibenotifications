@@ -112,7 +112,7 @@ export async function stopDaemon() {
   }
 }
 
-function isDaemonRunning() {
+export function isDaemonRunning() {
   if (!existsSync(PID_FILE)) return false;
   const pid = parseInt(readFileSync(PID_FILE, "utf-8").trim());
   try {

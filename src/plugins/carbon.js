@@ -18,8 +18,9 @@ function getOrCreateSession(model) {
       const existing = JSON.parse(readFileSync(SESSION_FILE, "utf-8"));
       // Reset if session is stale (new working day)
       if (Date.now() - existing.startTime < SESSION_MAX_AGE_MS) {
-        if (model && !existing.model) {
+        if (model && existing.model !== model) {
           existing.model = model;
+          existing.co2Rate = CO2_RATES[model] ?? CO2_RATES["claude-sonnet-4-6"];
           atomicWriteFileSync(SESSION_FILE, JSON.stringify(existing));
         }
         return existing;

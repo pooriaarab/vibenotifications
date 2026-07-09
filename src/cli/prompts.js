@@ -160,6 +160,19 @@ export function textInput(label, options = {}) {
   return new Promise((resolve) => {
     const rl = createInterface({ input: process.stdin, output: process.stdout });
 
+    // Mask typed characters as "*" for secret fields (tokens, passwords) so
+    // they don't land in terminal scrollback / tmux history / screen recordings.
+    if (options.mask) {
+      const realWrite = rl.output.write.bind(rl.output);
+      rl._writeToOutput = (str) => {
+        if (str.startsWith(`  ${label}`) || /[\r\n]/.test(str)) {
+          realWrite(str);
+        } else {
+          realWrite(str.replace(/[^\r\n]/g, "*"));
+        }
+      };
+    }
+
     function prompt() {
       const hint = options.placeholder ? ` ${ANSI.gray}(${options.placeholder})${ANSI.reset}` : "";
       rl.question(`  ${label}${hint}: `, (answer) => {

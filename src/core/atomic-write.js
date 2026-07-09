@@ -10,8 +10,8 @@ import { writeFileSync, renameSync } from "fs";
 // Copied standalone alongside statusline.js / hooks/*.js into
 // ~/.vibenotifications/core/ (see core/hooks.js installHooks) so relative
 // imports keep working outside the dev tree.
-export function atomicWriteFileSync(path, data) {
+export function atomicWriteFileSync(path, data, options = {}) {
   const tmp = `${path}.${process.pid}.${Date.now()}.tmp`;
-  writeFileSync(tmp, data);
+  writeFileSync(tmp, data, options);
   renameSync(tmp, path);
 }

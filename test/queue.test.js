@@ -22,6 +22,20 @@ test("deduplicateNotifications: matching id upserts in place instead of duplicat
   assert.equal(result.find((n) => n.id === "carbon-session").title, "6g");
 });
 
+test("deduplicateNotifications: bucketed source ids replace old buckets", () => {
+  const existing = [{ id: "stocks-aapl-100", source: "stocks", title: "old" }];
+  const incoming = [{ id: "stocks-aapl-101", source: "stocks", title: "new" }];
+  const result = deduplicateNotifications(existing, incoming);
+  assert.deepEqual(result.map((n) => n.id), ["stocks-aapl-101"]);
+});
+
+test("deduplicateNotifications: stable numeric external ids are preserved", () => {
+  const existing = [{ id: "github-100", source: "github", title: "old" }];
+  const incoming = [{ id: "github-101", source: "github", title: "new" }];
+  const result = deduplicateNotifications(existing, incoming);
+  assert.deepEqual(result.map((n) => n.id), ["github-101", "github-100"]);
+});
+
 test("sortByPriority: urgent before high before normal before low", () => {
   const notifs = [
     { priority: "low", timestamp: "2026-01-01" },

@@ -18,18 +18,20 @@ const SESSION_FILE = join(VN_DIR, "carbon-session.json");
 // notification text before it's ever concatenated with our own ANSI codes —
 // otherwise a malicious notification title/url can inject terminal escapes
 // into the status line (e.g. hide/rewrite output, OSC 8 hyperlink spoofing).
-function sanitize(str) {
+function sanitize(str, maxLen = 200) {
   if (typeof str !== "string") return "";
   return str
     .replace(/\x1b\[[0-9;]*[a-zA-Z]/g, "")   // CSI sequences
     .replace(/\x1b\][^\x07\x1b]*(\x07|\x1b\\)/g, "") // OSC sequences
     .replace(/[\x00-\x1f\x7f]/g, "")          // remaining control chars
-    .slice(0, 200);
+    .slice(0, maxLen);
 }
 
+const SAFE_URL_RE = /^https?:\/\/[\x21-\x7e]{1,200}$/;
+
 function sanitizeUrl(url) {
-  if (typeof url !== "string" || !/^https?:\/\//.test(url)) return "";
-  return sanitize(url);
+  if (typeof url !== "string" || !SAFE_URL_RE.test(url)) return "";
+  return url;
 }
 
 // Compute carbon live from session file — bypasses the 60s daemon cache.
@@ -66,7 +68,7 @@ function render() {
   }
 
   if (topNonCarbon) {
-    const icon = sanitize(topNonCarbon.source).toUpperCase();
+    const icon = sanitize(topNonCarbon.source, 40).toUpperCase();
     const title = sanitize(topNonCarbon.title);
     console.log(`\x1b[33m[${icon}]\x1b[0m ${title}`);
     const url = sanitizeUrl(topNonCarbon.url);

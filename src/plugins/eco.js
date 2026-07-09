@@ -101,7 +101,8 @@ export default {
     ];
 
     // Threshold alert: check carbon session for current CO₂ estimate
-    const thresholdG = parseFloat(config.threshold) || 50;
+    const parsedThreshold = parseFloat(config.threshold);
+    const thresholdG = Number.isFinite(parsedThreshold) ? parsedThreshold : 50;
     if (thresholdG > 0 && existsSync(SESSION_FILE)) {
       try {
         const session = JSON.parse(readFileSync(SESSION_FILE, "utf-8"));

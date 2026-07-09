@@ -61,13 +61,38 @@ Usage:
   vibenotifications fetch           Fetch notifications once (no daemon)
   vibenotifications uninstall       Remove everything
 
-Plugins: apple-calendar, email, github, google-calendar, mcp-bridge, slack, stocks, x`);
+Plugins: ${await pluginList()}`);
       break;
-    default: {
+    case undefined: {
       const { init } = await import("../src/cli/init.js");
       await init();
+      break;
     }
+    default:
+      console.log(`Unknown command: ${command}
+
+vibenotifications -- customizable notifications for Claude Code
+
+Usage:
+  vibenotifications                 Interactive setup wizard
+  vibenotifications init            Interactive setup wizard
+  vibenotifications dashboard       View all notifications
+  vibenotifications add <plugin>    Enable a new source
+  vibenotifications remove <plugin> Disable a source
+  vibenotifications start           Start notification daemon
+  vibenotifications stop            Stop notification daemon
+  vibenotifications fetch           Fetch notifications once (no daemon)
+  vibenotifications uninstall       Remove everything
+
+Plugins: ${await pluginList()}`);
+      process.exit(1);
   }
+}
+
+async function pluginList() {
+  const { loadPlugins } = await import("../src/core/plugins.js");
+  const plugins = await loadPlugins();
+  return Object.keys(plugins).sort().join(", ");
 }
 
 main().catch((err) => {

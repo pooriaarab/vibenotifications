@@ -98,6 +98,9 @@ vibenotifications uninstall
 ```
 
 This removes all hooks, stops the daemon, and cleans up `~/.vibenotifications/`.
+Any custom `statusLine` or `spinnerVerbs` you had before install are restored
+automatically. A full pre-install snapshot of `~/.claude/settings.json` is also
+kept at `~/.vibenotifications/claude-settings.backup.json` for manual recovery.
 
 ## Contributing
 
