@@ -74,6 +74,9 @@ export async function installHooks() {
     command: `node ${join(VN_DIR, "statusline.js")}`,
   };
 
+  // ~/.claude/ may not exist yet on a machine that has never run Claude
+  // Code before this install; writeFileSync does not create parent dirs.
+  mkdirSync(dirname(CLAUDE_SETTINGS), { recursive: true });
   writeFileSync(CLAUDE_SETTINGS, JSON.stringify(settings, null, 2));
 }
 
