@@ -104,6 +104,9 @@ export async function installHooks() {
     atomicWriteFileSync(spinnerVerbsBackupPath, JSON.stringify(settings.spinnerVerbs, null, 2), { mode: 0o600 });
   }
 
+  // ~/.claude/ may not exist yet on a machine that has never run Claude
+  // Code before this install; atomicWriteFileSync does not create parent dirs.
+  mkdirSync(dirname(CLAUDE_SETTINGS), { recursive: true });
   atomicWriteFileSync(CLAUDE_SETTINGS, JSON.stringify(settings, null, 2), { mode: 0o600 });
 }
 

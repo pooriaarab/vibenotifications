@@ -143,6 +143,18 @@ export default {
 };
 ```
 
+## Releasing
+
+CI runs on every PR/push to `main` (syntax-check + package validation). To publish
+a new version:
+
+1. Bump `version` in `package.json`, commit, merge to `main`.
+2. `git tag vX.Y.Z && git push origin vX.Y.Z`
+3. The publish workflow builds and publishes to npm automatically (idempotent —
+   safe to rerun; skips if that version is already published).
+
+Requires an `NPM_TOKEN` repo secret (npm automation token with publish access).
+
 ## License
 
 MIT

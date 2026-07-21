@@ -1,9 +1,12 @@
+# CI: install, syntax-check every source/bin file, run tests, validate the npm package.
+# Runs on every PR and push to main.
 name: CI
 
 on:
+  pull_request:
+    branches: [main]
   push:
     branches: [main]
-  pull_request:
 
 jobs:
   test:
@@ -12,9 +15,27 @@ jobs:
       matrix:
         node-version: [20, 22]
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
-      - run: find bin src -name '*.js' -print0 | xargs -0 -n1 node --check
-      - run: npm test
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Syntax-check bin and src
+        run: |
+          find bin src -name "*.js" -print0 | xargs -0 -n1 node --check
+
+      - name: Run tests
+        run: npm test
+
+      - name: Validate package (dry-run pack)
+        run: npm pack --dry-run
+
+      - name: Audit
+        run: npm audit --audit-level=moderate
+        continue-on-error: true
