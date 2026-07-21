@@ -1,16 +1,19 @@
-import { readFileSync, writeFileSync, mkdirSync, existsSync } from "fs";
+import { readFileSync, mkdirSync, existsSync, chmodSync } from "fs";
 import { join } from "path";
 import { homedir } from "os";
+import { atomicWriteFileSync } from "./atomic-write.js";
 
 const VN_DIR = join(homedir(), ".vibenotifications");
 const SETTINGS_FILE = join(VN_DIR, "settings.json");
 const NOTIFICATIONS_FILE = join(VN_DIR, "notifications.json");
+let warnedSettingsParse = false;
+let warnedNotificationsParse = false;
 
 export { VN_DIR, SETTINGS_FILE, NOTIFICATIONS_FILE };
 
 export function ensureDir() {
   if (!existsSync(VN_DIR)) {
-    mkdirSync(VN_DIR, { recursive: true });
+    mkdirSync(VN_DIR, { recursive: true, mode: 0o700 });
   }
 }
 
@@ -19,12 +22,32 @@ export function loadSettings() {
   if (!existsSync(SETTINGS_FILE)) {
     return getDefaultSettings();
   }
-  return JSON.parse(readFileSync(SETTINGS_FILE, "utf-8"));
+  try {
+    chmodSync(SETTINGS_FILE, 0o600);
+  } catch {
+    // best-effort permission migration
+  }
+  const d = getDefaultSettings();
+  try {
+    const s = JSON.parse(readFileSync(SETTINGS_FILE, "utf-8"));
+    return {
+      ...d,
+      ...s,
+      surfaces: { ...d.surfaces, ...s.surfaces },
+      priority: { ...d.priority, ...s.priority },
+    };
+  } catch {
+    if (!warnedSettingsParse) {
+      console.error("vibenotifications: settings.json is unreadable; using defaults.");
+      warnedSettingsParse = true;
+    }
+    return d;
+  }
 }
 
 export function saveSettings(settings) {
   ensureDir();
-  writeFileSync(SETTINGS_FILE, JSON.stringify(settings, null, 2));
+  atomicWriteFileSync(SETTINGS_FILE, JSON.stringify(settings, null, 2), { mode: 0o600 });
 }
 
 export function getDefaultSettings() {
@@ -51,10 +74,18 @@ export function loadNotifications() {
   if (!existsSync(NOTIFICATIONS_FILE)) {
     return [];
   }
-  return JSON.parse(readFileSync(NOTIFICATIONS_FILE, "utf-8"));
+  try {
+    return JSON.parse(readFileSync(NOTIFICATIONS_FILE, "utf-8"));
+  } catch {
+    if (!warnedNotificationsParse) {
+      console.error("vibenotifications: notifications.json is unreadable; using an empty queue.");
+      warnedNotificationsParse = true;
+    }
+    return [];
+  }
 }
 
 export function saveNotifications(notifications) {
   ensureDir();
-  writeFileSync(NOTIFICATIONS_FILE, JSON.stringify(notifications, null, 2));
+  atomicWriteFileSync(NOTIFICATIONS_FILE, JSON.stringify(notifications, null, 2), { mode: 0o600 });
 }

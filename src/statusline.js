@@ -4,36 +4,34 @@ import { readFileSync, existsSync } from "fs";
 import { join } from "path";
 import { homedir } from "os";
 
+// Copied standalone to ~/.vibenotifications/statusline.js by core/hooks.js
+// installHooks — core/co2-rates.js is copied alongside it into
+// ~/.vibenotifications/core/ so this relative import resolves in both the
+// dev tree and the installed copy.
+import { CO2_RATES, getComparison } from "./core/co2-rates.js";
+
 const VN_DIR = join(homedir(), ".vibenotifications");
 const NOTIFICATIONS_FILE = join(VN_DIR, "notifications.json");
 const SESSION_FILE = join(VN_DIR, "carbon-session.json");
 
-const CO2_RATES = {
-  "claude-sonnet-4-6": 0.85, "claude-opus-4-7": 0.55,
-  "claude-haiku-4-5-20251001": 0.10, "gpt-5.4": 0.50,
-  "gpt-5.4-mini": 0.12, "o3": 5.00, "o4-mini": 1.50, "mistral-large": 2.85,
-};
+// Strip control chars and ANSI/OSC escape sequences from externally-sourced
+// notification text before it's ever concatenated with our own ANSI codes —
+// otherwise a malicious notification title/url can inject terminal escapes
+// into the status line (e.g. hide/rewrite output, OSC 8 hyperlink spoofing).
+function sanitize(str, maxLen = 200) {
+  if (typeof str !== "string") return "";
+  return str
+    .replace(/\x1b\[[0-9;]*[a-zA-Z]/g, "")   // CSI sequences
+    .replace(/\x1b\][^\x07\x1b]*(\x07|\x1b\\)/g, "") // OSC sequences
+    .replace(/[\x00-\x1f\x7f]/g, "")          // remaining control chars
+    .slice(0, maxLen);
+}
 
-const COMPARISONS = [
-  { maxG: 0.01,  text: "fresh session",           emoji: "🌱" },
-  { maxG: 0.07,  text: "1 Slack message",          emoji: "💬" },
-  { maxG: 2,     text: "{n} Slack messages",       emoji: "💬", unit: 0.035 },
-  { maxG: 6,     text: "{n} Google searches",      emoji: "🔍", unit: 0.2 },
-  { maxG: 15,    text: "{n}% phone charge",        emoji: "📱", unit: 0.09 },
-  { maxG: 50,    text: "{n} min of Zoom",          emoji: "📹", unit: 17 },
-  { maxG: 110,   text: "boiling a kettle",         emoji: "☕" },
-  { maxG: 300,   text: "{n}km drive",              emoji: "🚗", unit: 170 },
-  { maxG: 10000, text: "{n} kettles",              emoji: "☕", unit: 70 },
-];
+const SAFE_URL_RE = /^https?:\/\/[\x21-\x7e]{1,200}$/;
 
-function getComparison(g) {
-  for (const c of COMPARISONS) {
-    if (g <= c.maxG) {
-      if (!c.unit) return `${c.emoji} ${c.text}`;
-      return `${c.emoji} ${c.text.replace("{n}", Math.max(1, Math.round(g / c.unit)))}`;
-    }
-  }
-  return `🌍 ${(g / 1000).toFixed(2)}kg CO₂`;
+function sanitizeUrl(url) {
+  if (typeof url !== "string" || !SAFE_URL_RE.test(url)) return "";
+  return url;
 }
 
 // Compute carbon live from session file — bypasses the 60s daemon cache.
@@ -70,10 +68,12 @@ function render() {
   }
 
   if (topNonCarbon) {
-    const icon = topNonCarbon.source.toUpperCase();
-    console.log(`\x1b[33m[${icon}]\x1b[0m ${topNonCarbon.title}`);
-    if (topNonCarbon.url)
-      console.log(`\x1b[90m  \x1b]8;;${topNonCarbon.url}\x07${topNonCarbon.url}\x1b]8;;\x07\x1b[0m`);
+    const icon = sanitize(topNonCarbon.source, 40).toUpperCase();
+    const title = sanitize(topNonCarbon.title);
+    console.log(`\x1b[33m[${icon}]\x1b[0m ${title}`);
+    const url = sanitizeUrl(topNonCarbon.url);
+    if (url)
+      console.log(`\x1b[90m  \x1b]8;;${url}\x07${url}\x1b]8;;\x07\x1b[0m`);
     return;
   }
 

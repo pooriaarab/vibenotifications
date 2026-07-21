@@ -37,24 +37,34 @@ export default {
   },
 
   fetch: async (config) => {
-    const res = await fetch("https://api.github.com/notifications", {
-      headers: {
-        Authorization: `Bearer ${config.token}`,
-        "User-Agent": "vibenotifications",
-      },
-    });
-    if (!res.ok) return [];
-    const data = await res.json();
+    try {
+      const res = await fetch("https://api.github.com/notifications", {
+        headers: {
+          Authorization: `Bearer ${config.token}`,
+          "User-Agent": "vibenotifications",
+        },
+        signal: AbortSignal.timeout(10_000),
+      });
+      if (!res.ok) return [];
+      const data = await res.json();
 
-    return data.map((n) => ({
-      id: `github-${n.id}`,
-      source: "github",
-      title: n.subject.title,
-      body: `${n.reason} in ${n.repository.full_name}`,
-      url: n.repository.html_url,
-      priority: n.reason === "review_requested" || n.reason === "ci_activity" ? "high" : "normal",
-      timestamp: n.updated_at,
-      actionable: n.reason === "review_requested" || n.reason === "ci_activity",
-    }));
+      return data.map((n) => {
+        const reason = n.reason ?? "notification";
+        const repoName = n.repository?.full_name ?? "unknown repo";
+        return {
+          id: `github-${n.id}`,
+          source: "github",
+          title: n.subject?.title ?? "(no title)",
+          body: `${reason} in ${repoName}`,
+          url: n.repository?.html_url ?? "",
+          priority: reason === "review_requested" || reason === "ci_activity" ? "high" : "normal",
+          timestamp: n.updated_at,
+          actionable: reason === "review_requested" || reason === "ci_activity",
+        };
+      });
+    } catch {
+      // Silent fail — same pattern as every other plugin's fetch()
+      return [];
+    }
   },
 };

@@ -41,13 +41,14 @@ export default {
     try {
       const convRes = await fetch("https://slack.com/api/conversations.list?types=im&limit=10", {
         headers: { Authorization: `Bearer ${config.token}` },
+        signal: AbortSignal.timeout(10_000),
       });
       const convData = await convRes.json();
       if (convData.ok) {
         for (const channel of convData.channels.slice(0, 5)) {
           const histRes = await fetch(
             `https://slack.com/api/conversations.history?channel=${channel.id}&limit=1`,
-            { headers: { Authorization: `Bearer ${config.token}` } }
+            { headers: { Authorization: `Bearer ${config.token}` }, signal: AbortSignal.timeout(10_000) }
           );
           const histData = await histRes.json();
           if (histData.ok && histData.messages?.length > 0) {

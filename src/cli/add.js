@@ -1,11 +1,12 @@
 import { loadSettings, saveSettings } from "../core/config.js";
-import { getPlugin } from "../core/plugins.js";
+import { getPlugin, loadPlugins } from "../core/plugins.js";
 import { textInput, ANSI } from "./prompts.js";
 
 export async function add(pluginName) {
   if (!pluginName) {
+    const plugins = await loadPlugins();
     console.log("Usage: vibenotifications add <plugin>");
-    console.log("Plugins: github, slack, x, email, stocks, mcp-bridge, carbon, eco");
+    console.log(`Plugins: ${Object.keys(plugins).sort().join(", ")}`);
     return;
   }
 
@@ -24,6 +25,7 @@ export async function add(pluginName) {
     const value = await textInput(schema.label, {
       placeholder: schema.placeholder,
       validate: schema.validate,
+      mask: schema.type === "secret",
     });
     pluginConfig[key] = value;
   }

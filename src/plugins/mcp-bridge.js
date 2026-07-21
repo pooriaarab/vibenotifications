@@ -27,7 +27,7 @@ export default {
 
     for (const name of serverNames) {
       notifications.push({
-        id: `mcp-${name}-${Date.now()}`,
+        id: `mcp-${name}-${Math.floor(Date.now() / (5 * 60000))}`,
         source: "mcp-bridge",
         title: `MCP: ${name} connected`,
         body: `MCP server '${name}' is available`,

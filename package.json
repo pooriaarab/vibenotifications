@@ -3,6 +3,9 @@
   "version": "0.5.2",
   "description": "Customizable notifications for Claude Code -- GitHub PRs, Slack DMs, stock prices, and more while you code",
   "type": "module",
+  "scripts": {
+    "test": "find test -name '*.test.js' -print0 | xargs -0 node --test"
+  },
   "bin": {
     "vibenotifications": "./bin/vibenotifications.js"
   },

@@ -41,7 +41,8 @@ export default {
       try {
         const ids = cryptoSymbols.map((s) => cryptoMap[s.toUpperCase()]).join(",");
         const res = await fetch(
-          `https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=usd&include_24hr_change=true`
+          `https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=usd&include_24hr_change=true`,
+          { signal: AbortSignal.timeout(10_000) }
         );
         if (res.ok) {
           const data = await res.json();
@@ -52,7 +53,7 @@ export default {
               const change = info.usd_24h_change?.toFixed(1) || "0.0";
               const arrow = parseFloat(change) >= 0 ? "+" : "";
               notifications.push({
-                id: `stocks-${symbol}-${Date.now()}`,
+                id: `stocks-${symbol}-${Math.floor(Date.now() / (5 * 60000))}`,
                 source: "stocks",
                 title: `${symbol.toUpperCase()}: $${info.usd.toLocaleString()} (${arrow}${change}%)`,
                 body: `24h change: ${arrow}${change}%`,
@@ -71,7 +72,7 @@ export default {
 
     for (const symbol of stockSymbols) {
       notifications.push({
-        id: `stocks-${symbol}-${Date.now()}`,
+        id: `stocks-${symbol}-${Math.floor(Date.now() / (5 * 60000))}`,
         source: "stocks",
         title: `${symbol.toUpperCase()}: price tracking requires API key (coming soon)`,
         body: "Stock price tracking via Alpha Vantage coming in next release",
