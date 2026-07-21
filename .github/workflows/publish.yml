@@ -1,0 +1,44 @@
+# Publish vibenotifications to npm on a v*.*.* tag push.
+#
+# Usage:
+#   1. Bump "version" in package.json, commit.
+#   2. git tag vX.Y.Z && git push origin vX.Y.Z
+#   3. This workflow builds and publishes automatically.
+#
+# Idempotent: if this exact version is already on the registry, the publish
+# step is skipped rather than failing (safe to rerun / retag).
+#
+# REQUIRED secret (set in repo settings -> Secrets and variables -> Actions):
+#   NPM_TOKEN — npm automation token with publish access to vibenotifications
+name: Publish
+
+on:
+  push:
+    tags: ["v*.*.*"]
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          registry-url: "https://registry.npmjs.org"
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Publish to npm
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          if npm view "vibenotifications@$VERSION" version >/dev/null 2>&1; then
+            echo "vibenotifications@$VERSION already published; skipping."
+          else
+            npm publish --access public
+          fi
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
