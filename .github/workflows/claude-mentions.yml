@@ -1,0 +1,52 @@
+name: Claude Mentions
+
+on:
+  issue_comment:
+    types: [created]
+  pull_request_review_comment:
+    types: [created]
+
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+
+jobs:
+  claude-mentions:
+    runs-on: ubuntu-latest
+
+    # Only run if it's a PR (not a plain issue) AND comment contains @claude
+    if: |
+      (github.event_name == 'issue_comment' && github.event.issue.pull_request && contains(github.event.comment.body, '@claude')) ||
+      (github.event_name == 'pull_request_review_comment' && contains(github.event.comment.body, '@claude'))
+
+    steps:
+      # Checkout the PR's code so Claude can actually inspect diffs/files.
+      - name: Checkout PR (issue_comment)
+        if: github.event_name == 'issue_comment'
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: refs/pull/${{ github.event.issue.number }}/head
+
+      - name: Checkout PR (review comment)
+        if: github.event_name == 'pull_request_review_comment'
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: refs/pull/${{ github.event.pull_request.number }}/head
+
+      - name: Run Claude (reply in thread)
+        uses: anthropics/claude-code-action@v1
+        with:
+          github_token: ${{ github.token }}
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          show_full_output: true
+          claude_args: --debug
+          prompt: |
+            You are responding to a user who mentioned @claude on a GitHub PR.
+            Use the local repo checkout to understand the PR diff and context.
+            Reply directly in the PR thread to the triggering comment.
+
+            User comment:
+            ${{ github.event.comment.body || github.event.review_comment.body }}
