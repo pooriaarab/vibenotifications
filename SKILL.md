@@ -42,6 +42,7 @@ The interactive setup wizard walks through selecting notification sources, enter
 | **Email** | Unread count | Yes (IMAP) |
 | **Stocks/Crypto** | BTC, ETH, SOL, DOGE prices | No |
 | **MCP Bridge** | Connected MCP server status | No |
+| **Vibe Suite** | Local vibe-suite events (viberadio recaps, task milestones) | No |
 
 ## Notification Surfaces
 
