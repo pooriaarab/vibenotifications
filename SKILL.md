@@ -43,6 +43,7 @@ The interactive setup wizard walks through selecting notification sources, enter
 | **Stocks/Crypto** | BTC, ETH, SOL, DOGE prices | No |
 | **MCP Bridge** | Connected MCP server status | No |
 | **Vibe Suite** | Local vibe-suite events (viberadio recaps, task milestones) | No |
+| **private-repo-4944** | private-repo-4944 routing/limit/spend events from `~/.private-repo-4944-*/notify.jsonl` (config: `homes`, `types`, `minSeverity`, `showRoutes`) | No |
 
 ## Notification Surfaces
 

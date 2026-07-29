@@ -34,6 +34,7 @@ Notifications appear across **5 Claude Code surfaces**:
 | **Carbon Tracker** 🌱 | Live CO₂ estimate in status line (e.g. `🌱 85g CO₂ · ☕ boiling a kettle`) | No |
 | **Eco Mode** ♻️ | Injects token-saving prompt into Claude's context — cuts ~65% output tokens without quality loss | No |
 | **Vibe Suite** | Local vibe-suite events (viberadio recaps, task milestones) from `~/.vibe/notify.jsonl` | No |
+| **private-repo-4944** | private-repo-4944 routing/limit/spend events from `~/.private-repo-4944-*/notify.jsonl` (config: `homes`, `types`, `minSeverity`, `showRoutes`) | No |
 
 ## Setup
 
