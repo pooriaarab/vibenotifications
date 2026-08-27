@@ -61,52 +61,60 @@ export default {
 
 async function fetchICSEvents(url, lookahead, source) {
   try {
-    const res = await fetch(url, { signal: AbortSignal.timeout(10_000) });
-    if (!res.ok) return [];
-    const icsText = await res.text();
-
-    const notifications = [];
+    const icsText = await fetchICSText(url);
+    if (!icsText) return [];
     const events = parseICS(icsText);
-    const now = Date.now();
-    const windowEnd = now + (lookahead + 60) * 60000;
-
-    for (const event of events) {
-      if (!event.start || !event.summary) continue;
-      const startMs = event.start.getTime();
-      if (startMs < now - 5 * 60000 || startMs > windowEnd) continue;
-
-      const minutesUntil = (startMs - now) / 60000;
-      let priority = "low";
-      let body = "";
-
-      if (minutesUntil <= 5 && minutesUntil > -5) {
-        priority = "urgent";
-        body = "Starting now!";
-      } else if (minutesUntil <= lookahead && minutesUntil > 0) {
-        priority = "high";
-        body = `In ${Math.round(minutesUntil)} min`;
-      } else {
-        body = `At ${event.start.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`;
-      }
-
-      if (event.location) body += ` — ${event.location}`;
-
-      notifications.push({
-        id: `${source}-${event.uid || event.summary.replace(/\s+/g, "-")}-${event.start.toISOString().slice(0, 10)}`,
-        source,
-        title: `Meeting: ${event.summary}`,
-        body: body.trim(),
-        url: event.url || "",
-        priority,
-        timestamp: new Date().toISOString(),
-        actionable: priority === "urgent" || priority === "high",
-      });
-    }
-
-    return notifications;
+    return buildICSNotifications(events, lookahead, source);
   } catch {
     return [];
   }
+}
+
+async function fetchICSText(url) {
+  const res = await fetch(url, { signal: AbortSignal.timeout(10_000) });
+  if (!res.ok) return null;
+  return res.text();
+}
+
+function buildICSNotifications(events, lookahead, source) {
+  const notifications = [];
+  const now = Date.now();
+  for (const event of events) {
+    const n = processICSEvent(event, now, lookahead, source);
+    if (n) notifications.push(n);
+  }
+  return notifications;
+}
+
+function processICSEvent(event, now, lookahead, source) {
+  if (!event.start || !event.summary) return null;
+  const startMs = event.start.getTime();
+  const windowEnd = now + (lookahead + 60) * 60000;
+  if (startMs < now - 5 * 60000 || startMs > windowEnd) return null;
+  const minutesUntil = (startMs - now) / 60000;
+  const timing = resolveICSTiming(minutesUntil, lookahead, event);
+  let body = timing.body;
+  if (event.location) body += ` — ${event.location}`;
+  return {
+    id: `${source}-${event.uid || event.summary.replace(/\s+/g, "-")}-${event.start.toISOString().slice(0, 10)}`,
+    source,
+    title: `Meeting: ${event.summary}`,
+    body: body.trim(),
+    url: event.url || "",
+    priority: timing.priority,
+    timestamp: new Date().toISOString(),
+    actionable: timing.priority === "urgent" || timing.priority === "high",
+  };
+}
+
+function resolveICSTiming(minutesUntil, lookahead, event) {
+  if (minutesUntil <= 5 && minutesUntil > -5) {
+    return { priority: "urgent", body: "Starting now!" };
+  }
+  if (minutesUntil <= lookahead && minutesUntil > 0) {
+    return { priority: "high", body: `In ${Math.round(minutesUntil)} min` };
+  }
+  return { priority: "low", body: `At ${event.start.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}` };
 }
 
 function parseICS(text) {

@@ -78,22 +78,44 @@ function eventBody(event) {
   return `${event.type}${profile ? ` via ${profile}` : ""}${route ? `: ${route}` : ""}`;
 }
 
-function parseEvent(line) {
-  let event;
+function parseJsonSafe(line) {
   try {
-    event = JSON.parse(line);
+    return JSON.parse(line);
   } catch {
     return null;
   }
-  if (!event || typeof event !== "object" || Array.isArray(event)) return null;
-  if (!EVENT_TYPES.includes(event.type)) return null;
-  if (!hasOwn(SEVERITY_RANK, event.severity)) return null;
+}
 
-  const message = asString(event.message);
+function hasValidStructure(event) {
+  return event && typeof event === "object" && !Array.isArray(event);
+}
+
+function hasValidType(event) {
+  return EVENT_TYPES.includes(event.type);
+}
+
+function hasValidSeverity(event) {
+  return hasOwn(SEVERITY_RANK, event.severity);
+}
+
+function extractMessage(event) {
+  return asString(event.message) ?? null;
+}
+
+function buildTimestamp(event) {
+  const parsed = asString(event.ts) ? Date.parse(event.ts) : NaN;
+  if (Number.isFinite(parsed)) return new Date(parsed).toISOString();
+  return new Date().toISOString();
+}
+
+function parseEvent(line) {
+  const event = parseJsonSafe(line);
+  if (!hasValidStructure(event)) return null;
+  if (!hasValidType(event)) return null;
+  if (!hasValidSeverity(event)) return null;
+  const message = extractMessage(event);
   if (!message) return null;
-
-  const parsedTs = asString(event.ts) ? Date.parse(event.ts) : NaN;
-  const timestamp = Number.isFinite(parsedTs) ? new Date(parsedTs).toISOString() : new Date().toISOString();
+  const timestamp = buildTimestamp(event);
   return { ...event, home: asString(event.home) ?? "unknown", message, timestamp };
 }
 
@@ -123,6 +145,24 @@ export function parseOffrouterLine(line, index = 0) {
   return event ? notificationFromEvent(event, index) : null;
 }
 
+function processFileLines(file, config, cutoff, notifications) {
+  if (!existsSync(file)) return;
+  let lines;
+  try {
+    lines = readFileSync(file, "utf8").split("\n");
+  } catch {
+    return;
+  }
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i].trim();
+    if (!line) continue;
+    const event = parseEvent(line);
+    if (!event) continue;
+    if (new Date(event.timestamp).getTime() <= cutoff || !shouldSurface(event, config)) continue;
+    notifications.push(notificationFromEvent(event, i));
+  }
+}
+
 export default {
   name: "offrouter",
   displayName: "OffRouter",
@@ -138,27 +178,9 @@ export default {
       const homes = configuredHomes(config);
       const cutoff = Date.now() - MAX_AGE_MS;
       const notifications = [];
-
       for (const file of homes) {
-        if (!existsSync(file)) continue;
-
-        let lines;
-        try {
-          lines = readFileSync(file, "utf8").split("\n");
-        } catch {
-          continue;
-        }
-
-        for (let i = 0; i < lines.length; i++) {
-          const line = lines[i].trim();
-          if (!line) continue;
-          const event = parseEvent(line);
-          if (!event) continue;
-          if (new Date(event.timestamp).getTime() <= cutoff || !shouldSurface(event, config)) continue;
-          notifications.push(notificationFromEvent(event, i));
-        }
+        processFileLines(file, config, cutoff, notifications);
       }
-
       return notifications;
     } catch {
       // Silent fail -- same pattern as every other plugin's fetch()
