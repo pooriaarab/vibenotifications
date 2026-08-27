@@ -3,52 +3,48 @@
 const command = process.argv[2];
 const args = process.argv.slice(3);
 
-async function main() {
-  switch (command) {
-    case "init": {
-      const { init } = await import("../src/cli/init.js");
-      await init();
-      break;
-    }
-    case "dashboard": {
-      const { dashboard } = await import("../src/cli/dashboard.js");
-      await dashboard();
-      break;
-    }
-    case "add": {
-      const { add } = await import("../src/cli/add.js");
-      await add(args[0]);
-      break;
-    }
-    case "remove": {
-      const { remove } = await import("../src/cli/remove.js");
-      await remove(args[0]);
-      break;
-    }
-    case "start": {
-      const { startDaemon } = await import("../src/core/daemon.js");
-      await startDaemon();
-      break;
-    }
-    case "stop": {
-      const { stopDaemon } = await import("../src/core/daemon.js");
-      await stopDaemon();
-      break;
-    }
-    case "fetch": {
-      const { fetchOnce } = await import("../src/core/daemon.js");
-      await fetchOnce();
-      break;
-    }
-    case "uninstall": {
-      const { uninstall } = await import("../src/cli/uninstall.js");
-      await uninstall();
-      break;
-    }
-    case "help":
-    case "--help":
-    case "-h":
-      console.log(`vibenotifications -- customizable notifications for Claude Code
+async function handleInit() {
+  const { init } = await import("../src/cli/init.js");
+  await init();
+}
+
+async function handleDashboard() {
+  const { dashboard } = await import("../src/cli/dashboard.js");
+  await dashboard();
+}
+
+async function handleAdd() {
+  const { add } = await import("../src/cli/add.js");
+  await add(args[0]);
+}
+
+async function handleRemove() {
+  const { remove } = await import("../src/cli/remove.js");
+  await remove(args[0]);
+}
+
+async function handleStart() {
+  const { startDaemon } = await import("../src/core/daemon.js");
+  await startDaemon();
+}
+
+async function handleStop() {
+  const { stopDaemon } = await import("../src/core/daemon.js");
+  await stopDaemon();
+}
+
+async function handleFetch() {
+  const { fetchOnce } = await import("../src/core/daemon.js");
+  await fetchOnce();
+}
+
+async function handleUninstall() {
+  const { uninstall } = await import("../src/cli/uninstall.js");
+  await uninstall();
+}
+
+async function handleHelp() {
+  console.log(`vibenotifications -- customizable notifications for Claude Code
 
 Usage:
   vibenotifications                 Interactive setup wizard
@@ -62,14 +58,32 @@ Usage:
   vibenotifications uninstall       Remove everything
 
 Plugins: ${await pluginList()}`);
-      break;
-    case undefined: {
-      const { init } = await import("../src/cli/init.js");
-      await init();
-      break;
-    }
-    default:
-      console.log(`Unknown command: ${command}
+}
+
+const handlers = {
+  init: handleInit,
+  dashboard: handleDashboard,
+  add: handleAdd,
+  remove: handleRemove,
+  start: handleStart,
+  stop: handleStop,
+  fetch: handleFetch,
+  uninstall: handleUninstall,
+  help: handleHelp,
+  "--help": handleHelp,
+  "-h": handleHelp,
+};
+
+async function main() {
+  if (command === undefined) {
+    await handleInit();
+    return;
+  }
+  if (Object.hasOwn(handlers, command)) {
+    await handlers[command]();
+    return;
+  }
+  console.log(`Unknown command: ${command}
 
 vibenotifications -- customizable notifications for Claude Code
 
@@ -85,8 +99,7 @@ Usage:
   vibenotifications uninstall       Remove everything
 
 Plugins: ${await pluginList()}`);
-      process.exit(1);
-  }
+  process.exit(1);
 }
 
 async function pluginList() {
