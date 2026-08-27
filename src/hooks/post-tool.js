@@ -22,14 +22,57 @@ process.stdin.on("end", () => {
   }
 });
 
-function run() {
-  if (!existsSync(NOTIFICATIONS_FILE)) {
-    process.exit(0);
-    return;
-  }
-
+function loadNotifications() {
+  if (!existsSync(NOTIFICATIONS_FILE)) return null;
   const notifications = JSON.parse(readFileSync(NOTIFICATIONS_FILE, "utf-8"));
-  if (!notifications.length) {
+  if (!notifications.length) return null;
+  return notifications;
+}
+
+function findForced(notifications) {
+  return notifications.find(
+    (n) => n.forceInject && n.actionable && FORCE_INJECT_SOURCES.has(n.source)
+  );
+}
+
+function emitForced(forced) {
+  const safeTitle = sanitize(forced.title);
+  const safeBody = sanitizeInternal(forced.body || "");
+  console.log(JSON.stringify({
+    additionalContext: `<vibenotifications-begin source="${sanitize(forced.source)}">${safeTitle}. ${safeBody}</vibenotifications-end> -- This is an active mode from vibenotifications. Follow these instructions.`,
+  }));
+}
+
+function findActionable(notifications) {
+  return notifications.find((n) => n.actionable && (n.priority === "urgent" || n.priority === "high"));
+}
+
+function emitActionable(actionable) {
+  const safeTitle = sanitize(actionable.title);
+  const safeBody = sanitize(actionable.body || "");
+  const safeUrl = actionable.url && /^https?:\/\/[\x21-\x7e]{1,200}$/.test(actionable.url) ? actionable.url : "";
+  console.log(JSON.stringify({
+    additionalContext: `<vibenotifications-begin source="${sanitize(actionable.source)}">${safeTitle}. ${safeBody}${safeUrl ? " URL: " + safeUrl : ""}</vibenotifications-end> -- This is a notification from vibenotifications. Mention it only if relevant.`,
+  }));
+}
+
+function tryForcedInjection(notifications) {
+  const forced = findForced(notifications);
+  if (!forced) return false;
+  emitForced(forced);
+  return true;
+}
+
+function tryActionableInjection(notifications) {
+  if (Math.random() >= 0.3) return;
+  const actionable = findActionable(notifications);
+  if (!actionable) return;
+  emitActionable(actionable);
+}
+
+function run() {
+  const notifications = loadNotifications();
+  if (!notifications) {
     process.exit(0);
     return;
   }
@@ -41,34 +84,13 @@ function run() {
   // every fetchInterval (60s default); per-tool-call freshness isn't needed
   // for a list of up to 20 verbs.
 
-  // forceInject: always inject (e.g. eco mode system prompt) — bypasses random gate
-  const forced = notifications.find(
-    (n) => n.forceInject && n.actionable && FORCE_INJECT_SOURCES.has(n.source)
-  );
-  if (forced) {
-    const safeTitle = sanitize(forced.title);
-    // forceInject sources are internal (not external API data) — allow longer body
-    const safeBody = sanitizeInternal(forced.body || "");
-    console.log(JSON.stringify({
-      additionalContext: `<vibenotifications-begin source="${sanitize(forced.source)}">${safeTitle}. ${safeBody}</vibenotifications-end> -- This is an active mode from vibenotifications. Follow these instructions.`,
-    }));
+  if (tryForcedInjection(notifications)) {
     process.exit(0);
     return;
   }
 
   // Context injection for high-priority actionable items (30% of the time)
-  if (Math.random() < 0.3) {
-    const actionable = notifications.find((n) => n.actionable && (n.priority === "urgent" || n.priority === "high"));
-    if (actionable) {
-      // Sanitize external content to prevent prompt injection
-      const safeTitle = sanitize(actionable.title);
-      const safeBody = sanitize(actionable.body || "");
-      const safeUrl = actionable.url && /^https?:\/\/[\x21-\x7e]{1,200}$/.test(actionable.url) ? actionable.url : "";
-      console.log(JSON.stringify({
-        additionalContext: `<vibenotifications-begin source="${sanitize(actionable.source)}">${safeTitle}. ${safeBody}${safeUrl ? " URL: " + safeUrl : ""}</vibenotifications-end> -- This is a notification from vibenotifications. Mention it only if relevant.`,
-      }));
-    }
-  }
+  tryActionableInjection(notifications);
 
   process.exit(0);
 }

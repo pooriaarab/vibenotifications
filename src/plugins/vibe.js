@@ -23,42 +23,87 @@ const PRIORITY_BY_KIND = {
 
 const asString = (v) => (typeof v === "string" && v.length > 0 ? v : undefined);
 
+function parseJsonSafe(line) {
+  try {
+    return JSON.parse(line);
+  } catch {
+    return null;
+  }
+}
+
+function isValidVibeEvent(event) {
+  return event && typeof event.kind === "string";
+}
+
+function getTimestamp(event) {
+  if (typeof event.ts === "number" && Number.isFinite(event.ts)) return event.ts;
+  return Date.now();
+}
+
+function getPayload(event) {
+  if (event.payload && typeof event.payload === "object") return event.payload;
+  return {};
+}
+
+function getDetail(payload, event) {
+  const detail = asString(payload.message)
+    ?? asString(payload.summary)
+    ?? asString(payload.detail)
+    ?? asString(payload.title)
+    ?? asString(payload.description);
+  if (detail) return detail;
+  const cwd = asString(event.cwd);
+  if (cwd) return `in ${cwd}`;
+  return "";
+}
+
+function getAgent(event) {
+  return asString(event.agent) ?? "vibe-suite";
+}
+
+function getPriority(kind) {
+  return PRIORITY_BY_KIND[kind] ?? "low";
+}
+
+function isActionable(kind) {
+  return kind === "error" || kind === "tests-fail";
+}
+
+function buildVibeNotification(event, index) {
+  const ts = getTimestamp(event);
+  const payload = getPayload(event);
+  const detail = getDetail(payload, event);
+  const agent = getAgent(event);
+  const kind = event.kind;
+  return {
+    id: `vibe-${ts}-${kind}-${index}`,
+    source: "vibe",
+    title: `${agent}: ${kind.replace(/-/g, " ")}`,
+    body: detail,
+    url: "",
+    priority: getPriority(kind),
+    timestamp: new Date(ts).toISOString(),
+    actionable: isActionable(kind),
+  };
+}
+
 /**
  * Parse one JSONL line (a VibeEvent) into a notification, or return null for
  * blank/malformed lines. Exported so it can be unit-tested in isolation.
  */
 export function parseVibeLine(line, index = 0) {
-  let event;
-  try {
-    event = JSON.parse(line);
-  } catch {
-    return null;
-  }
-  if (!event || typeof event.kind !== "string") return null;
+  const event = parseJsonSafe(line);
+  if (!isValidVibeEvent(event)) return null;
+  return buildVibeNotification(event, index);
+}
 
-  const ts = typeof event.ts === "number" && Number.isFinite(event.ts) ? event.ts : Date.now();
-  const payload = event.payload && typeof event.payload === "object" ? event.payload : {};
-  const detail =
-    asString(payload.message) ??
-    asString(payload.summary) ??
-    asString(payload.detail) ??
-    asString(payload.title) ??
-    asString(payload.description);
-  const agent = asString(event.agent) ?? "vibe-suite";
-  const kind = event.kind;
+function isRecent(notification, cutoff) {
+  return new Date(notification.timestamp).getTime() > cutoff;
+}
 
-  return {
-    // Stable per line position (the channel file is append-only), so the
-    // daemon's id-based dedup upserts instead of duplicating on re-fetch.
-    id: `vibe-${ts}-${kind}-${index}`,
-    source: "vibe",
-    title: `${agent}: ${kind.replace(/-/g, " ")}`,
-    body: detail ?? (asString(event.cwd) ? `in ${event.cwd}` : ""),
-    url: "",
-    priority: PRIORITY_BY_KIND[kind] ?? "low",
-    timestamp: new Date(ts).toISOString(),
-    actionable: kind === "error" || kind === "tests-fail",
-  };
+function readVibeLines(file) {
+  if (!existsSync(file)) return [];
+  return readFileSync(file, "utf8").split("\n");
 }
 
 export default {
@@ -73,18 +118,16 @@ export default {
 
   fetch: async (config) => {
     try {
-      // config.file is an undocumented override used by tests.
       const file = asString(config?.file) ?? DEFAULT_FILE;
-      if (!existsSync(file)) return [];
-
-      const lines = readFileSync(file, "utf8").split("\n");
+      const lines = readVibeLines(file);
+      if (lines.length === 0) return [];
       const cutoff = Date.now() - MAX_AGE_MS;
       const notifications = [];
       for (let i = 0; i < lines.length; i++) {
         const line = lines[i].trim();
         if (!line) continue;
         const n = parseVibeLine(line, i);
-        if (n && new Date(n.timestamp).getTime() > cutoff) notifications.push(n);
+        if (n && isRecent(n, cutoff)) notifications.push(n);
       }
       return notifications;
     } catch {

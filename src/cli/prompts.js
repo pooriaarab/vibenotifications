@@ -21,6 +21,93 @@ const ANSI = {
 
 export { ANSI };
 
+function buildHeader(title) {
+  return `${ANSI.clearLine}${ANSI.bold}${title}${ANSI.reset}\n`
+    + `${ANSI.clearLine}${ANSI.gray}  ↑/↓ navigate  ·  enter select  ·  a select all${ANSI.reset}\n`
+    + `${ANSI.clearLine}\n`;
+}
+
+function formatItemLine(item, isCursor, isSelected) {
+  const checkbox = isSelected
+    ? `${ANSI.green}[✓]${ANSI.reset}`
+    : `${ANSI.gray}[ ]${ANSI.reset}`;
+  const pointer = isCursor ? `${ANSI.cyan}❯${ANSI.reset}` : " ";
+  const label = isCursor
+    ? `${ANSI.white}${ANSI.bold}${item.label}${ANSI.reset}`
+    : `${item.label}`;
+  const desc = item.description
+    ? `${ANSI.gray} — ${item.description}${ANSI.reset}`
+    : "";
+  return `${ANSI.clearLine}  ${pointer} ${checkbox} ${label}${desc}\n`;
+}
+
+function buildItemsOutput(items, cursor, selected) {
+  let out = "";
+  for (let i = 0; i < items.length; i++) {
+    out += formatItemLine(items[i], i === cursor, selected.has(items[i].name));
+  }
+  return out;
+}
+
+function buildDoneOutput(cursor, doneIndex, selected) {
+  const isDone = cursor === doneIndex;
+  const count = selected.size;
+  const doneLabel = count > 0 ? `Done (${count} selected)` : "Done";
+  if (isDone) {
+    return `${ANSI.clearLine}  ${ANSI.cyan}❯${ANSI.reset} ${ANSI.green}${ANSI.bold}→ ${doneLabel}${ANSI.reset}\n`;
+  }
+  return `${ANSI.clearLine}    ${ANSI.gray}→ ${doneLabel}${ANSI.reset}\n`;
+}
+
+function buildCheckboxOutput(title, items, state) {
+  return buildHeader(title)
+    + buildItemsOutput(items, state.cursor, state.selected)
+    + buildDoneOutput(state.cursor, state.doneIndex, state.selected)
+    + `${ANSI.clearLine}`;
+}
+
+function handleUp(state, render) {
+  state.cursor = state.cursor > 0 ? state.cursor - 1 : state.doneIndex;
+  render();
+}
+
+function handleDown(state, render) {
+  state.cursor = state.cursor < state.doneIndex ? state.cursor + 1 : 0;
+  render();
+}
+
+function handleSpaceOrEnter(state, ctx) {
+  if (state.cursor === state.doneIndex) {
+    handleConfirm(state, ctx.items, ctx.cleanup, ctx.resolve);
+    return;
+  }
+  const name = ctx.items[state.cursor].name;
+  if (state.selected.has(name)) state.selected.delete(name);
+  else state.selected.add(name);
+  ctx.render();
+}
+
+function handleConfirm(state, items, cleanup, resolve) {
+  cleanup();
+  const selectedLabels = items.filter((i) => state.selected.has(i.name)).map((i) => i.label);
+  if (selectedLabels.length > 0) {
+    console.log(`${ANSI.green}Selected:${ANSI.reset} ${selectedLabels.join(", ")}\n`);
+  } else {
+    console.log(`${ANSI.gray}No sources selected.${ANSI.reset}\n`);
+  }
+  resolve(items.filter((i) => state.selected.has(i.name)).map((i) => i.name));
+}
+
+function handleSelectAll(state, items, render) {
+  if (state.selected.size === items.length) state.selected.clear();
+  else for (const item of items) state.selected.add(item.name);
+  render();
+}
+
+function createInitialState(items, doneIndex) {
+  return { cursor: 0, selected: new Set(items.filter((i) => i.checked).map((i) => i.name)), doneIndex };
+}
+
 /**
  * Multi-select checkbox prompt with arrow key navigation.
  *
@@ -29,110 +116,15 @@ export { ANSI };
  * @returns {Promise<string[]>} - Array of selected item names
  */
 export function checkboxSelect(title, items) {
-  // Total rows = items + 1 "Done" row
-  const DONE_INDEX = items.length;
-
+  const doneIndex = items.length;
   return new Promise((resolve) => {
-    let cursor = 0;
-    const selected = new Set(items.filter((i) => i.checked).map((i) => i.name));
+    const state = createInitialState(items, doneIndex);
 
     function render() {
-      const totalLines = DONE_INDEX + 5; // title + hint + blank + items + done
+      const totalLines = doneIndex + 5;
       let output = `\x1b[${totalLines}A`;
-
-      output += `${ANSI.clearLine}${ANSI.bold}${title}${ANSI.reset}\n`;
-      output += `${ANSI.clearLine}${ANSI.gray}  ↑/↓ navigate  ·  enter select  ·  a select all${ANSI.reset}\n`;
-      output += `${ANSI.clearLine}\n`;
-
-      for (let i = 0; i < items.length; i++) {
-        const item = items[i];
-        const isCursor = i === cursor;
-        const isSelected = selected.has(item.name);
-        const checkbox = isSelected
-          ? `${ANSI.green}[✓]${ANSI.reset}`
-          : `${ANSI.gray}[ ]${ANSI.reset}`;
-        const pointer = isCursor ? `${ANSI.cyan}❯${ANSI.reset}` : " ";
-        const label = isCursor
-          ? `${ANSI.white}${ANSI.bold}${item.label}${ANSI.reset}`
-          : `${item.label}`;
-        const desc = item.description
-          ? `${ANSI.gray} — ${item.description}${ANSI.reset}`
-          : "";
-
-        output += `${ANSI.clearLine}  ${pointer} ${checkbox} ${label}${desc}\n`;
-      }
-
-      // "Done" row
-      const isDone = cursor === DONE_INDEX;
-      const count = selected.size;
-      const doneLabel = count > 0
-        ? `Done (${count} selected)`
-        : "Done";
-      if (isDone) {
-        output += `${ANSI.clearLine}  ${ANSI.cyan}❯${ANSI.reset} ${ANSI.green}${ANSI.bold}→ ${doneLabel}${ANSI.reset}\n`;
-      } else {
-        output += `${ANSI.clearLine}    ${ANSI.gray}→ ${doneLabel}${ANSI.reset}\n`;
-      }
-
-      output += `${ANSI.clearLine}`;
+      output += buildCheckboxOutput(title, items, state);
       process.stdout.write(output);
-    }
-
-    const totalLines = DONE_INDEX + 5;
-    process.stdout.write("\n".repeat(totalLines));
-    render();
-
-    process.stdin.setRawMode(true);
-    process.stdin.resume();
-    process.stdin.setEncoding("utf-8");
-
-    function onKey(key) {
-      if (key === "\x03") { cleanup(); process.exit(0); }
-
-      // Up
-      if (key === "\x1b[A" || key === "k") {
-        cursor = cursor > 0 ? cursor - 1 : DONE_INDEX;
-        render();
-        return;
-      }
-
-      // Down
-      if (key === "\x1b[B" || key === "j") {
-        cursor = cursor < DONE_INDEX ? cursor + 1 : 0;
-        render();
-        return;
-      }
-
-      // Enter or Space — toggle if on an item, confirm if on Done
-      if (key === "\r" || key === "\n" || key === " ") {
-        if (cursor === DONE_INDEX) {
-          // Confirm
-          cleanup();
-          const selectedLabels = items.filter((i) => selected.has(i.name)).map((i) => i.label);
-          if (selectedLabels.length > 0) {
-            console.log(`${ANSI.green}Selected:${ANSI.reset} ${selectedLabels.join(", ")}\n`);
-          } else {
-            console.log(`${ANSI.gray}No sources selected.${ANSI.reset}\n`);
-          }
-          resolve(items.filter((i) => selected.has(i.name)).map((i) => i.name));
-          return;
-        }
-
-        // Toggle item
-        const name = items[cursor].name;
-        if (selected.has(name)) selected.delete(name);
-        else selected.add(name);
-        render();
-        return;
-      }
-
-      // 'a' — select/deselect all
-      if (key === "a") {
-        if (selected.size === items.length) selected.clear();
-        else for (const item of items) selected.add(item.name);
-        render();
-        return;
-      }
     }
 
     function cleanup() {
@@ -142,6 +134,34 @@ export function checkboxSelect(title, items) {
       process.stdout.write(ANSI.cursorShow);
     }
 
+    function onKey(key) {
+      if (key === "\x03") {
+        cleanup();
+        process.exit(0);
+      }
+      if (key === "\x1b[A" || key === "k") {
+        handleUp(state, render);
+        return;
+      }
+      if (key === "\x1b[B" || key === "j") {
+        handleDown(state, render);
+        return;
+      }
+      if (key === "\r" || key === "\n" || key === " ") {
+        handleSpaceOrEnter(state, { items, cleanup, resolve, render });
+        return;
+      }
+      if (key === "a") {
+        handleSelectAll(state, items, render);
+      }
+    }
+
+    const totalLines = doneIndex + 5;
+    process.stdout.write("\n".repeat(totalLines));
+    render();
+    process.stdin.setRawMode(true);
+    process.stdin.resume();
+    process.stdin.setEncoding("utf-8");
     process.stdout.write(ANSI.cursorHide);
     process.stdin.on("data", onKey);
   });

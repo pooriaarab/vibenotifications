@@ -17,7 +17,7 @@
   },
   "rules": {
     "complexity": [
-      "warn",
+      "error",
       {
         "max": 10
       }
@@ -31,7 +31,7 @@
       }
     ],
     "max-lines-per-function": [
-      "warn",
+      "error",
       {
         "max": 50,
         "skipBlankLines": true,
@@ -45,7 +45,7 @@
       }
     ],
     "max-depth": [
-      "warn",
+      "error",
       {
         "max": 4
       }
@@ -57,7 +57,7 @@
       }
     ],
     "no-var": "error",
-    "prefer-const": "warn",
+    "prefer-const": "error",
     "eqeqeq": "error",
     "no-debugger": "error",
     "typescript/no-explicit-any": "error",

@@ -33,24 +33,22 @@ export function syncHookFiles() {
   }
 }
 
-export async function installHooks() {
-  syncHookFiles();
-
-  // Backup Claude Code settings before modifying
+function backupClaudeSettings() {
   if (existsSync(CLAUDE_SETTINGS)) {
     const backupPath = join(VN_DIR, "claude-settings.backup.json");
     copyFileSync(CLAUDE_SETTINGS, backupPath);
   }
+}
 
-  // Update Claude Code settings
-  let settings = {};
+function loadClaudeSettings() {
   if (existsSync(CLAUDE_SETTINGS)) {
-    settings = JSON.parse(readFileSync(CLAUDE_SETTINGS, "utf-8"));
+    return JSON.parse(readFileSync(CLAUDE_SETTINGS, "utf-8"));
   }
+  return {};
+}
 
+function ensurePostToolHook(settings) {
   if (!settings.hooks) settings.hooks = {};
-
-  // PostToolUse hook
   if (!settings.hooks.PostToolUse) settings.hooks.PostToolUse = [];
   settings.hooks.PostToolUse = settings.hooks.PostToolUse.filter((h) => !isVNHook(h));
   settings.hooks.PostToolUse.push({
@@ -68,8 +66,9 @@ export async function installHooks() {
       },
     ],
   });
+}
 
-  // SessionStart hook
+function ensureSessionStartHook(settings) {
   if (!settings.hooks.SessionStart) settings.hooks.SessionStart = [];
   settings.hooks.SessionStart = settings.hooks.SessionStart.filter((h) => !isVNHook(h));
   settings.hooks.SessionStart.push({
@@ -81,33 +80,44 @@ export async function installHooks() {
       timeout: 10,
     }],
   });
+}
 
-  // Status line — back up any pre-existing custom statusLine (not ours) so
-  // removeHooks can restore it later instead of deleting it.
-  const statusLineBackupPath = join(VN_DIR, "statusline.orig.json");
+function ensureStatusLine(settings) {
+  const backupPath = join(VN_DIR, "statusline.orig.json");
   if (
     settings.statusLine &&
     !settings.statusLine.command?.includes(".vibenotifications") &&
-    !existsSync(statusLineBackupPath)
+    !existsSync(backupPath)
   ) {
-    atomicWriteFileSync(statusLineBackupPath, JSON.stringify(settings.statusLine, null, 2), { mode: 0o600 });
+    atomicWriteFileSync(backupPath, JSON.stringify(settings.statusLine, null, 2), { mode: 0o600 });
   }
   settings.statusLine = {
     type: "command",
     command: `node ${join(VN_DIR, "statusline.js")}`,
   };
+}
 
-  // Same backup/restore treatment for spinnerVerbs — it gets overwritten at
-  // runtime (surfaces.js), so snapshot the user's original value now.
-  const spinnerVerbsBackupPath = join(VN_DIR, "spinner-verbs.orig.json");
-  if (settings.spinnerVerbs && !existsSync(spinnerVerbsBackupPath)) {
-    atomicWriteFileSync(spinnerVerbsBackupPath, JSON.stringify(settings.spinnerVerbs, null, 2), { mode: 0o600 });
+function ensureSpinnerVerbs(settings) {
+  const backupPath = join(VN_DIR, "spinner-verbs.orig.json");
+  if (settings.spinnerVerbs && !existsSync(backupPath)) {
+    atomicWriteFileSync(backupPath, JSON.stringify(settings.spinnerVerbs, null, 2), { mode: 0o600 });
   }
+}
 
-  // ~/.claude/ may not exist yet on a machine that has never run Claude
-  // Code before this install; atomicWriteFileSync does not create parent dirs.
+function persistClaudeSettings(settings) {
   mkdirSync(dirname(CLAUDE_SETTINGS), { recursive: true });
   atomicWriteFileSync(CLAUDE_SETTINGS, JSON.stringify(settings, null, 2), { mode: 0o600 });
+}
+
+export async function installHooks() {
+  syncHookFiles();
+  backupClaudeSettings();
+  const settings = loadClaudeSettings();
+  ensurePostToolHook(settings);
+  ensureSessionStartHook(settings);
+  ensureStatusLine(settings);
+  ensureSpinnerVerbs(settings);
+  persistClaudeSettings(settings);
 }
 
 export async function removeHooks() {

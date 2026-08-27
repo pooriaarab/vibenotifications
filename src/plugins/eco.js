@@ -39,6 +39,64 @@ CAVEMAN RULE: why use many token when few do trick.`,
 const SAVINGS = { lite: 30, full: 65, ultra: 80 };
 const VALID_LEVELS = Object.keys(ECO_PROMPTS);
 
+function resolveLevel(config) {
+  const level = (config.level || "full").trim().toLowerCase();
+  return { level, savings: SAVINGS[level] || 65, prompt: ECO_PROMPTS[level] || ECO_PROMPTS.full };
+}
+
+function buildEcoNotification(level, savings, prompt) {
+  return {
+    id: "eco-mode-active",
+    source: "eco",
+    title: `♻️ ECO ${level.toUpperCase()} · ~${savings}% token savings`,
+    body: prompt,
+    priority: "high",
+    url: "https://github.com/pooriaarab/vibenotifications",
+    timestamp: new Date().toISOString(),
+    actionable: true,
+    forceInject: true,
+  };
+}
+
+function getThreshold(config) {
+  const parsed = parseFloat(config.threshold);
+  const value = Number.isFinite(parsed) ? parsed : 50;
+  return value;
+}
+
+function buildThresholdNotification(co2, thresholdG) {
+  return {
+    id: `eco-threshold-${Math.floor(co2 / thresholdG)}`,
+    source: "eco",
+    title: `⚠️ ${co2.toFixed(0)}g CO₂ this session — consider switching to Haiku for simple tasks`,
+    body: `Hit your ${thresholdG}g eco alert. Haiku is 8.5× greener for reads, searches, and formatting tasks.`,
+    priority: "high",
+    url: "https://github.com/pooriaarab/vibenotifications",
+    timestamp: new Date().toISOString(),
+    actionable: true,
+  };
+}
+
+function computeCo2(session) {
+  const rate = session.co2Rate ?? DEFAULT_CO2_RATE;
+  const toolTokens = (session.toolCallCount || 0) * 2000;
+  const elapsedMin = (Date.now() - session.startTime) / 60000;
+  const estimatedTokens = Math.max(toolTokens, Math.round(elapsedMin * 500));
+  return (estimatedTokens / 1000) * rate;
+}
+
+function tryAddThresholdNotification(notifications, config) {
+  const thresholdG = getThreshold(config);
+  if (thresholdG <= 0 || !existsSync(SESSION_FILE)) return;
+  try {
+    const session = JSON.parse(readFileSync(SESSION_FILE, "utf-8"));
+    const co2 = computeCo2(session);
+    if (co2 >= thresholdG) notifications.push(buildThresholdNotification(co2, thresholdG));
+  } catch {
+    // Carbon plugin not installed or session file unreadable — skip threshold check
+  }
+}
+
 export default {
   name: "eco",
   displayName: "Eco Mode",
@@ -80,55 +138,9 @@ export default {
   },
 
   fetch: async (config) => {
-    const level = (config.level || "full").trim().toLowerCase();
-    const savings = SAVINGS[level] || 65;
-    const prompt = ECO_PROMPTS[level] || ECO_PROMPTS.full;
-
-    const notifications = [
-      {
-        id: "eco-mode-active",
-        source: "eco",
-        title: `♻️ ECO ${level.toUpperCase()} · ~${savings}% token savings`,
-        body: prompt,
-        priority: "high",
-        url: "https://github.com/pooriaarab/vibenotifications",
-        timestamp: new Date().toISOString(),
-        // actionable:true enables the standard context injection path.
-        // forceInject:true signals post-tool.js to bypass the 30% random gate.
-        actionable: true,
-        forceInject: true,
-      },
-    ];
-
-    // Threshold alert: check carbon session for current CO₂ estimate
-    const parsedThreshold = parseFloat(config.threshold);
-    const thresholdG = Number.isFinite(parsedThreshold) ? parsedThreshold : 50;
-    if (thresholdG > 0 && existsSync(SESSION_FILE)) {
-      try {
-        const session = JSON.parse(readFileSync(SESSION_FILE, "utf-8"));
-        const rate = session.co2Rate ?? DEFAULT_CO2_RATE;
-        const toolTokens = (session.toolCallCount || 0) * 2000;
-        const elapsedMin = (Date.now() - session.startTime) / 60000;
-        const estimatedTokens = Math.max(toolTokens, Math.round(elapsedMin * 500));
-        const co2 = (estimatedTokens / 1000) * rate;
-
-        if (co2 >= thresholdG) {
-          notifications.push({
-            id: `eco-threshold-${Math.floor(co2 / thresholdG)}`,
-            source: "eco",
-            title: `⚠️ ${co2.toFixed(0)}g CO₂ this session — consider switching to Haiku for simple tasks`,
-            body: `Hit your ${thresholdG}g eco alert. Haiku is 8.5× greener for reads, searches, and formatting tasks.`,
-            priority: "high",
-            url: "https://github.com/pooriaarab/vibenotifications",
-            timestamp: new Date().toISOString(),
-            actionable: true,
-          });
-        }
-      } catch {
-        // Carbon plugin not installed or session file unreadable — skip threshold check
-      }
-    }
-
+    const { level, savings, prompt } = resolveLevel(config);
+    const notifications = [buildEcoNotification(level, savings, prompt)];
+    tryAddThresholdNotification(notifications, config);
     return notifications;
   },
 };
