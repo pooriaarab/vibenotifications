@@ -111,6 +111,12 @@ jobs:
         uses: anthropics/claude-code-action@v1
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          # The vibecodereview chair pushes its fixes onto the PR branch, and that
+          # push fires synchronize with actor=claude[bot]. Without this the action
+          # refuses on the actor, so the chair improving a branch is what turns this
+          # check red. Named rather than '*': the if: above excludes dependabot on
+          # purpose, and admitting every bot would undo that.
+          allowed_bots: "claude"
           use_commit_signing: true
           settings: ".claude/settings.json"
           prompt: |
