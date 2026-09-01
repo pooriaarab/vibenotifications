@@ -6,7 +6,9 @@ import { stopDaemon } from "../core/daemon.js";
 export async function uninstall() {
   console.log("");
 
-  try { await stopDaemon(); } catch {}
+  try {
+    await stopDaemon();
+  } catch {}
   await removeHooks();
   console.log("  Removed Claude Code hooks");
 

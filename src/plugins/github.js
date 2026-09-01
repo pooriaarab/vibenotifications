@@ -31,7 +31,8 @@ export default {
         "User-Agent": "vibenotifications",
       },
     });
-    if (!res.ok) throw new Error("Invalid GitHub token — check scopes (needs: notifications, repo)");
+    if (!res.ok)
+      throw new Error("Invalid GitHub token — check scopes (needs: notifications, repo)");
     const user = await res.json();
     return { connected: true, user: user.login };
   },

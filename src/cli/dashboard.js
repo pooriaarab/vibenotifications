@@ -22,7 +22,9 @@ export async function dashboard() {
 
     for (const [source, notifs] of Object.entries(bySource)) {
       const urgent = notifs.filter((n) => n.priority === "urgent" || n.priority === "high");
-      console.log(`  ${source}: ${notifs.length} notifications${urgent.length ? ` (${urgent.length} important)` : ""}`);
+      console.log(
+        `  ${source}: ${notifs.length} notifications${urgent.length ? ` (${urgent.length} important)` : ""}`,
+      );
       for (const n of notifs.slice(0, 3)) {
         console.log(`    - ${n.title}`);
       }
@@ -31,7 +33,9 @@ export async function dashboard() {
 
   console.log("");
 
-  const enabledSources = Object.entries(settings.sources).filter(([, c]) => c.enabled).map(([n]) => n);
+  const enabledSources = Object.entries(settings.sources)
+    .filter(([, c]) => c.enabled)
+    .map(([n]) => n);
   console.log(`Sources:    ${enabledSources.join(", ") || "none"}`);
 
   const daemonRunning = isDaemonRunning();

@@ -22,22 +22,18 @@ const ANSI = {
 export { ANSI };
 
 function buildHeader(title) {
-  return `${ANSI.clearLine}${ANSI.bold}${title}${ANSI.reset}\n`
-    + `${ANSI.clearLine}${ANSI.gray}  ↑/↓ navigate  ·  enter select  ·  a select all${ANSI.reset}\n`
-    + `${ANSI.clearLine}\n`;
+  return (
+    `${ANSI.clearLine}${ANSI.bold}${title}${ANSI.reset}\n` +
+    `${ANSI.clearLine}${ANSI.gray}  ↑/↓ navigate  ·  enter select  ·  a select all${ANSI.reset}\n` +
+    `${ANSI.clearLine}\n`
+  );
 }
 
 function formatItemLine(item, isCursor, isSelected) {
-  const checkbox = isSelected
-    ? `${ANSI.green}[✓]${ANSI.reset}`
-    : `${ANSI.gray}[ ]${ANSI.reset}`;
+  const checkbox = isSelected ? `${ANSI.green}[✓]${ANSI.reset}` : `${ANSI.gray}[ ]${ANSI.reset}`;
   const pointer = isCursor ? `${ANSI.cyan}❯${ANSI.reset}` : " ";
-  const label = isCursor
-    ? `${ANSI.white}${ANSI.bold}${item.label}${ANSI.reset}`
-    : `${item.label}`;
-  const desc = item.description
-    ? `${ANSI.gray} — ${item.description}${ANSI.reset}`
-    : "";
+  const label = isCursor ? `${ANSI.white}${ANSI.bold}${item.label}${ANSI.reset}` : `${item.label}`;
+  const desc = item.description ? `${ANSI.gray} — ${item.description}${ANSI.reset}` : "";
   return `${ANSI.clearLine}  ${pointer} ${checkbox} ${label}${desc}\n`;
 }
 
@@ -60,10 +56,12 @@ function buildDoneOutput(cursor, doneIndex, selected) {
 }
 
 function buildCheckboxOutput(title, items, state) {
-  return buildHeader(title)
-    + buildItemsOutput(items, state.cursor, state.selected)
-    + buildDoneOutput(state.cursor, state.doneIndex, state.selected)
-    + `${ANSI.clearLine}`;
+  return (
+    buildHeader(title) +
+    buildItemsOutput(items, state.cursor, state.selected) +
+    buildDoneOutput(state.cursor, state.doneIndex, state.selected) +
+    `${ANSI.clearLine}`
+  );
 }
 
 function handleUp(state, render) {
@@ -105,7 +103,11 @@ function handleSelectAll(state, items, render) {
 }
 
 function createInitialState(items, doneIndex) {
-  return { cursor: 0, selected: new Set(items.filter((i) => i.checked).map((i) => i.name)), doneIndex };
+  return {
+    cursor: 0,
+    selected: new Set(items.filter((i) => i.checked).map((i) => i.name)),
+    doneIndex,
+  };
 }
 
 /**
