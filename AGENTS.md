@@ -29,3 +29,17 @@ Settings for this repo are in `.github/pr-standards.json`. The standard is at
 https://github.com/pooriaarab/scripts/blob/main/pr-standards.md
 
 <!-- pr-standards:end -->
+
+## Brand and design
+
+Read `.agents/brand.md` and `.agents/design.md` before changing any public surface.
+Confirm deployment ownership and user approval before adding live routes.
+
+Run these checks before completing a change:
+
+```sh
+npm test
+git diff --check
+```
+
+Do not edit product code or lockfiles for documentation-only work.
