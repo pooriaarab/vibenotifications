@@ -1,0 +1,20 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(gh api:*)",
+      "Bash(gh pr diff:*)",
+      "Bash(gh pr view:*)",
+      "Bash(gh pr comment:*)",
+      "Bash(gh pr review:*)",
+      "Bash(gh pr list:*)",
+      "Bash(git:*)",
+      "Bash(jq:*)",
+      "Bash(cat:*)",
+      "Read",
+      "Glob",
+      "Grep",
+      "Edit",
+      "Write"
+    ]
+  }
+}
