@@ -14,7 +14,7 @@ specifically for the disqualifying categories:
 - **Irreversible/destructive data operations**: `uninstall.js`'s `rmSync` on
   `~/.vibenotifications/` is existing, documented, user-invoked behavior —
   not a new finding. Nothing in bugs/architecture/security proposes deleting
-  data as a *fix*.
+  data as a _fix_.
 - **CI/publish secrets**: architecture.md A9 (add CI) only needs
   `node --check` + `npm test`, no `NPM_TOKEN` or other secret — there's no
   `.github/workflows/` today and the proposed one doesn't publish.

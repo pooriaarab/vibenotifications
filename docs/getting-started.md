@@ -15,6 +15,7 @@ vibenotifications init
 ```
 
 This will:
+
 1. Show you all available notification sources (plugins)
 2. Walk you through enabling each one with API keys/tokens
 3. Test each connection

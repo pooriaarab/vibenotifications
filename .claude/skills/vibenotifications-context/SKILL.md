@@ -77,7 +77,7 @@ Docs for the contract: `docs/creating-plugins.md`. Design history:
    alone does nothing for already-installed users.
 
 2. **Dedup is by exact `id` string, forever-ish.** `queue.js
-   deduplicateNotifications` drops incoming ids already in the store; entries
+deduplicateNotifications` drops incoming ids already in the store; entries
    live 24h / max 100. Consequences: an `id` containing `Date.now()` is a NEW
    notification every fetch (queue flooding); a fully-stable id never refreshes.
    The established convention for "recurring status" notifications is a
@@ -134,7 +134,7 @@ Docs for the contract: `docs/creating-plugins.md`. Design history:
 - Versioning: manual bump in package.json + version-tagged commit titles
   (e.g. "fix: ... (v0.5.2) (#14)"). PRs merged to `main`; npm publish is manual.
 - Docs live in `docs/` (user-facing) and `README.md`; `site/` is a static
-  landing page; `SKILL.md` at repo root is the *published* Claude skill for
+  landing page; `SKILL.md` at repo root is the _published_ Claude skill for
   users of the tool (do not confuse it with this repo-context skill).
 
 ## Verification (no test suite exists)

@@ -1,4 +1,9 @@
-import { loadSettings, saveSettings, loadNotifications, saveNotifications } from "../core/config.js";
+import {
+  loadSettings,
+  saveSettings,
+  loadNotifications,
+  saveNotifications,
+} from "../core/config.js";
 
 export async function remove(pluginName) {
   if (!pluginName) {

@@ -46,7 +46,7 @@ re-derive them — implement directly from that file. Summary for reference:
   tests) will get an unhandled rejection instead of `[]`.
 - **Fix**: wrap the body of `fetch` in try/catch matching the other plugins'
   style, and use `n.subject?.title ?? "(no title)"` / `n.repository?.full_name
-  ?? "unknown repo"` defensively inside the `.map()`.
+?? "unknown repo"` defensively inside the `.map()`.
 
 ### B15. `installHooks` clobbers a pre-existing custom `statusLine` with no way back
 

@@ -56,7 +56,7 @@ are COPIED standalone into `~/.vibenotifications/` by
   Claude Code) at worst.
 - **Fix**: (a) implement A2 first (removes one writer); (b) in the remaining
   writers (`surfaces.js updateSpinnerVerbs`, `hooks.js
-  installHooks/removeHooks`), write atomically: serialize, `writeFileSync` to
+installHooks/removeHooks`), write atomically: serialize, `writeFileSync` to
   `${CLAUDE_SETTINGS}.vn-tmp` in the same directory, then `renameSync` over
   the target; (c) in `updateSpinnerVerbs`, skip the write entirely when the
   serialized `verbs` array equals the currently stored one (cheap
@@ -69,7 +69,8 @@ are COPIED standalone into `~/.vibenotifications/` by
 - **Fix**: in `fetchOnce`, run plugins concurrently:
   ```js
   const results = await Promise.allSettled(
-    enabledPlugins.map(({ plugin, config }) => plugin.fetch(config)));
+    enabledPlugins.map(({ plugin, config }) => plugin.fetch(config)),
+  );
   ```
   keeping the per-plugin success/error log lines. Add
   `signal: AbortSignal.timeout(10_000)` to every `fetch()` call in
@@ -87,8 +88,7 @@ are COPIED standalone into `~/.vibenotifications/` by
 - **Fix**: in `startDaemon`, open a log file and wire it in:
   ```js
   const log = openSync(join(VN_DIR, "daemon.log"), "a");
-  spawn(process.execPath, [daemonLoopScript], { detached: true,
-        stdio: ["ignore", log, log] });
+  spawn(process.execPath, [daemonLoopScript], { detached: true, stdio: ["ignore", log, log] });
   ```
   In `daemon-loop.js`, prefix each loop error with an ISO timestamp. Add a
   size guard at daemon start: if `daemon.log` > 1 MB, truncate it (simple
@@ -108,7 +108,7 @@ are COPIED standalone into `~/.vibenotifications/` by
 
 - **Files**: `src/core/hooks.js:10-23`, `src/core/daemon.js:46`
 - **Issue**: hooks are copied at `init` time only. `npm update -g
-  vibenotifications` leaves old copies in `~/.vibenotifications/` running
+vibenotifications` leaves old copies in `~/.vibenotifications/` running
   forever (this exact failure shipped as v0.5.2 — see commit `0e80c63`
   "actually include statusline.js this time").
 - **Fix**: extract the file-copy block of `installHooks` (hooks.js:12-23) into

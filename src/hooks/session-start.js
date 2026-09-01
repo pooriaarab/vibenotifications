@@ -52,7 +52,9 @@ function run() {
     const safeSource = sanitize(source);
     const urgent = notifs.filter((n) => n.priority === "urgent" || n.priority === "high");
     if (urgent.length > 0) {
-      lines.push(`  - ${safeSource}: ${notifs.length} (${urgent.length} important: ${sanitize(urgent[0].title)})`);
+      lines.push(
+        `  - ${safeSource}: ${notifs.length} (${urgent.length} important: ${sanitize(urgent[0].title)})`,
+      );
     } else {
       lines.push(`  - ${safeSource}: ${notifs.length} notifications`);
     }
