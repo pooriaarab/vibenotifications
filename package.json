@@ -2,9 +2,19 @@
   "name": "vibenotifications",
   "version": "0.6.0",
   "description": "Customizable notifications for Claude Code -- GitHub PRs, Slack DMs, stock prices, and more while you code",
-  "type": "module",
-  "scripts": {
-    "test": "find test -name '*.test.js' -print0 | xargs -0 node --test"
+  "keywords": [
+    "claude-code",
+    "developer-tools",
+    "github",
+    "notifications",
+    "productivity",
+    "slack"
+  ],
+  "license": "MIT",
+  "author": "Pooria Arab",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/pooriaarab/vibenotifications.git"
   },
   "bin": {
     "vibenotifications": "./bin/vibenotifications.js"
@@ -14,18 +24,8 @@
     "src/",
     "README.md"
   ],
-  "keywords": [
-    "claude-code",
-    "notifications",
-    "developer-tools",
-    "github",
-    "slack",
-    "productivity"
-  ],
-  "author": "Pooria Arab",
-  "license": "MIT",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/pooriaarab/vibenotifications.git"
+  "type": "module",
+  "scripts": {
+    "test": "find test -name '*.test.js' -print0 | xargs -0 node --test"
   }
 }

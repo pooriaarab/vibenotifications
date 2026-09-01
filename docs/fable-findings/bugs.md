@@ -53,12 +53,12 @@ commit `0e80c63` (v0.5.2).
 
 - **File**: `bin/vibenotifications.js:66-69`
 - **Bug**: the `default` switch case runs `init()`. A typo (`vibenotifications
-  strat`) drops the user into the interactive setup wizard, which can rewrite
+strat`) drops the user into the interactive setup wizard, which can rewrite
   `~/.claude/settings.json` hooks.
 - **Fix**: keep bare `vibenotifications` (no args) → `init()`, but for an
   unrecognized command print `Unknown command: <cmd>` plus the existing help
   text and `process.exit(1)`. Concretely: `if (command === undefined) { init }
-  else { unknown-command path }` in the default case.
+else { unknown-command path }` in the default case.
 
 ## B5. Hardcoded plugin lists drifted from actual plugins (two places, both wrong)
 
@@ -117,8 +117,8 @@ commit `0e80c63` (v0.5.2).
   session keeps the old `model`/`co2Rate` for up to 8h, and `statusline.js:46`
   reads `s.model` from that stale session.
 - **Fix**: `if (model && existing.model !== model) { existing.model = model;
-  existing.co2Rate = CO2_RATES[model] ?? CO2_RATES["claude-sonnet-4-6"];
-  writeFileSync(...); }`
+existing.co2Rate = CO2_RATES[model] ?? CO2_RATES["claude-sonnet-4-6"];
+writeFileSync(...); }`
 
 ## B10. `remove` leaves the removed source's notifications in the store
 
@@ -135,7 +135,7 @@ commit `0e80c63` (v0.5.2).
   `src/core/surfaces.js:10-24`
 - **Bug**: a `settings.json` written by an older version (or hand-edited) that
   lacks `surfaces` or `priority` makes `routeToSurfaces(sorted, undefined,
-  undefined)` throw (`surfaceConfig.spinnerVerbs` on undefined) — uncaught in
+undefined)` throw (`surfaceConfig.spinnerVerbs` on undefined) — uncaught in
   `fetchOnce`, so every daemon iteration errors.
 - **Fix**: in `loadSettings`, shallow-merge per top-level key:
   ```js

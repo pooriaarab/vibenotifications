@@ -25,7 +25,9 @@ test("parseVibeLine: parses a VibeEvent line into a notification", () => {
 });
 
 test("parseVibeLine: errors are high-priority and actionable", () => {
-  const n = parseVibeLine(JSON.stringify({ kind: "error", ts: 1785000000000, payload: { message: "boom" } }));
+  const n = parseVibeLine(
+    JSON.stringify({ kind: "error", ts: 1785000000000, payload: { message: "boom" } }),
+  );
   assert.equal(n.priority, "high");
   assert.equal(n.actionable, true);
   assert.equal(n.body, "boom");
@@ -49,7 +51,13 @@ test("fetch: reads each channel line as a notification", async () => {
   const file = join(dir, "notify.jsonl");
   try {
     const events = [
-      { kind: "task-done", agent: "viberadio", cwd: "/r", ts: Date.now(), payload: { summary: "recap narrated" } },
+      {
+        kind: "task-done",
+        agent: "viberadio",
+        cwd: "/r",
+        ts: Date.now(),
+        payload: { summary: "recap narrated" },
+      },
       { kind: "tests-pass", agent: "pi", cwd: "/r", ts: Date.now(), payload: { count: 5 } },
     ];
     writeFileSync(file, events.map((e) => JSON.stringify(e)).join("\n") + "\n");

@@ -90,24 +90,24 @@ Shows a digest of notifications when starting or resuming a Claude Code session.
 
 Controls the minimum priority level for each surface.
 
-| Setting | Default | Effect |
-|---------|---------|--------|
-| `minSpinner` | `"normal"` | Only `urgent`, `high`, and `normal` show in spinner |
-| `minStatusLine` | `"low"` | All priorities show in status line |
-| `minContextInjection` | `"high"` | Only `urgent` and `high` get injected into context |
+| Setting               | Default    | Effect                                              |
+| --------------------- | ---------- | --------------------------------------------------- |
+| `minSpinner`          | `"normal"` | Only `urgent`, `high`, and `normal` show in spinner |
+| `minStatusLine`       | `"low"`    | All priorities show in status line                  |
+| `minContextInjection` | `"high"`   | Only `urgent` and `high` get injected into context  |
 
 Priority order: `urgent` > `high` > `normal` > `low`
 
 ## File Locations
 
-| File | Purpose |
-|------|---------|
-| `~/.vibenotifications/settings.json` | Configuration |
-| `~/.vibenotifications/notifications.json` | Notification queue |
+| File                                             | Purpose                          |
+| ------------------------------------------------ | -------------------------------- |
+| `~/.vibenotifications/settings.json`             | Configuration                    |
+| `~/.vibenotifications/notifications.json`        | Notification queue               |
 | `~/.vibenotifications/current-notification.json` | Current status line notification |
-| `~/.vibenotifications/daemon.pid` | Daemon process ID |
-| `~/.vibenotifications/hooks/` | Installed hook scripts |
-| `~/.vibenotifications/statusline.js` | Status line script |
+| `~/.vibenotifications/daemon.pid`                | Daemon process ID                |
+| `~/.vibenotifications/hooks/`                    | Installed hook scripts           |
+| `~/.vibenotifications/statusline.js`             | Status line script               |
 
 ## Editing Settings Manually
 

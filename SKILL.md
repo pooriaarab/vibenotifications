@@ -10,6 +10,7 @@ Bring real-world notifications into your Claude Code session. While Claude works
 ## When to Use This Skill
 
 Use this skill when the user:
+
 - Wants to receive notifications (GitHub, Slack, email, stocks, crypto) inside Claude Code
 - Asks about monitoring GitHub PRs, CI failures, or mentions while coding
 - Wants Slack DMs or channel messages surfaced in their terminal
@@ -34,16 +35,16 @@ The interactive setup wizard walks through selecting notification sources, enter
 
 ## Available Plugins
 
-| Plugin | Source | API key needed? |
-|--------|--------|----------------|
-| **GitHub** | PR reviews, CI failures, mentions | Yes (PAT) |
-| **Slack** | DMs, channel messages | Yes (Bot token) |
-| **X/Twitter** | Mentions | Yes (Bearer token) |
-| **Email** | Unread count | Yes (IMAP) |
-| **Stocks/Crypto** | BTC, ETH, SOL, DOGE prices | No |
-| **MCP Bridge** | Connected MCP server status | No |
-| **Vibe Suite** | Local vibe-suite events (viberadio recaps, task milestones) | No |
-| **OffRouter** | OffRouter routing/limit/spend events from `~/.offrouter-*/notify.jsonl` (config: `homes`, `types`, `minSeverity`, `showRoutes`) | No |
+| Plugin            | Source                                                                                                                          | API key needed?    |
+| ----------------- | ------------------------------------------------------------------------------------------------------------------------------- | ------------------ |
+| **GitHub**        | PR reviews, CI failures, mentions                                                                                               | Yes (PAT)          |
+| **Slack**         | DMs, channel messages                                                                                                           | Yes (Bot token)    |
+| **X/Twitter**     | Mentions                                                                                                                        | Yes (Bearer token) |
+| **Email**         | Unread count                                                                                                                    | Yes (IMAP)         |
+| **Stocks/Crypto** | BTC, ETH, SOL, DOGE prices                                                                                                      | No                 |
+| **MCP Bridge**    | Connected MCP server status                                                                                                     | No                 |
+| **Vibe Suite**    | Local vibe-suite events (viberadio recaps, task milestones)                                                                     | No                 |
+| **OffRouter**     | OffRouter routing/limit/spend events from `~/.offrouter-*/notify.jsonl` (config: `homes`, `types`, `minSeverity`, `showRoutes`) | No                 |
 
 ## Notification Surfaces
 

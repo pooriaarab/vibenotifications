@@ -46,11 +46,12 @@ function getPayload(event) {
 }
 
 function getDetail(payload, event) {
-  const detail = asString(payload.message)
-    ?? asString(payload.summary)
-    ?? asString(payload.detail)
-    ?? asString(payload.title)
-    ?? asString(payload.description);
+  const detail =
+    asString(payload.message) ??
+    asString(payload.summary) ??
+    asString(payload.detail) ??
+    asString(payload.title) ??
+    asString(payload.description);
   if (detail) return detail;
   const cwd = asString(event.cwd);
   if (cwd) return `in ${cwd}`;
