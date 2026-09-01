@@ -31,7 +31,9 @@ export async function fetchOnce() {
   // source (e.g. a plugin doing several serial HTTP calls) stalled every
   // other source behind it.
   const allNotifications = [];
-  const results = await Promise.allSettled(enabledPlugins.map(({ plugin, config }) => plugin.fetch(config)));
+  const results = await Promise.allSettled(
+    enabledPlugins.map(({ plugin, config }) => plugin.fetch(config)),
+  );
   results.forEach((result, i) => {
     const { plugin } = enabledPlugins[i];
     if (result.status === "fulfilled") {
@@ -74,14 +76,10 @@ export async function startDaemon() {
   }
   const log = openSync(logPath, "a");
 
-  const child = spawn(
-    process.execPath,
-    [daemonLoopScript],
-    {
-      detached: true,
-      stdio: ["ignore", log, log],
-    }
-  );
+  const child = spawn(process.execPath, [daemonLoopScript], {
+    detached: true,
+    stdio: ["ignore", log, log],
+  });
 
   child.unref();
   writeFileSync(PID_FILE, String(child.pid));

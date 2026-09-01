@@ -31,29 +31,36 @@ function loadNotifications() {
 
 function findForced(notifications) {
   return notifications.find(
-    (n) => n.forceInject && n.actionable && FORCE_INJECT_SOURCES.has(n.source)
+    (n) => n.forceInject && n.actionable && FORCE_INJECT_SOURCES.has(n.source),
   );
 }
 
 function emitForced(forced) {
   const safeTitle = sanitize(forced.title);
   const safeBody = sanitizeInternal(forced.body || "");
-  console.log(JSON.stringify({
-    additionalContext: `<vibenotifications-begin source="${sanitize(forced.source)}">${safeTitle}. ${safeBody}</vibenotifications-end> -- This is an active mode from vibenotifications. Follow these instructions.`,
-  }));
+  console.log(
+    JSON.stringify({
+      additionalContext: `<vibenotifications-begin source="${sanitize(forced.source)}">${safeTitle}. ${safeBody}</vibenotifications-end> -- This is an active mode from vibenotifications. Follow these instructions.`,
+    }),
+  );
 }
 
 function findActionable(notifications) {
-  return notifications.find((n) => n.actionable && (n.priority === "urgent" || n.priority === "high"));
+  return notifications.find(
+    (n) => n.actionable && (n.priority === "urgent" || n.priority === "high"),
+  );
 }
 
 function emitActionable(actionable) {
   const safeTitle = sanitize(actionable.title);
   const safeBody = sanitize(actionable.body || "");
-  const safeUrl = actionable.url && /^https?:\/\/[\x21-\x7e]{1,200}$/.test(actionable.url) ? actionable.url : "";
-  console.log(JSON.stringify({
-    additionalContext: `<vibenotifications-begin source="${sanitize(actionable.source)}">${safeTitle}. ${safeBody}${safeUrl ? " URL: " + safeUrl : ""}</vibenotifications-end> -- This is a notification from vibenotifications. Mention it only if relevant.`,
-  }));
+  const safeUrl =
+    actionable.url && /^https?:\/\/[\x21-\x7e]{1,200}$/.test(actionable.url) ? actionable.url : "";
+  console.log(
+    JSON.stringify({
+      additionalContext: `<vibenotifications-begin source="${sanitize(actionable.source)}">${safeTitle}. ${safeBody}${safeUrl ? " URL: " + safeUrl : ""}</vibenotifications-end> -- This is a notification from vibenotifications. Mention it only if relevant.`,
+    }),
+  );
 }
 
 function tryForcedInjection(notifications) {
@@ -99,15 +106,15 @@ function run() {
 function sanitize(str) {
   if (typeof str !== "string") return "";
   return str
-    .replace(/[<>]/g, "")           // strip angle brackets
-    .replace(/[\x00-\x1f]/g, "")    // strip control characters
-    .slice(0, 200);                  // limit length
+    .replace(/[<>]/g, "") // strip angle brackets
+    .replace(/[\x00-\x1f]/g, "") // strip control characters
+    .slice(0, 200); // limit length
 }
 
 // For internal (non-external-API) sources — allow longer body for system prompt injection
 function sanitizeInternal(str) {
   if (typeof str !== "string") return "";
   return str
-    .replace(/[\x00-\x1f]/g, "")    // strip control characters only
-    .slice(0, 800);                  // longer limit for eco prompt
+    .replace(/[\x00-\x1f]/g, "") // strip control characters only
+    .slice(0, 800); // longer limit for eco prompt
 }

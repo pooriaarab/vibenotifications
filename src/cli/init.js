@@ -12,7 +12,8 @@ function buildItems(plugins, settings, connectedMCPs) {
     const noKey = Object.keys(p.requiredConfig).length === 0;
     let desc = "";
     if (alreadyEnabled) desc = "already enabled";
-    else if (p.name === "mcp-bridge" && connectedMCPs.length > 0) desc = `${connectedMCPs.length} connected: ${connectedMCPs.join(", ")}`;
+    else if (p.name === "mcp-bridge" && connectedMCPs.length > 0)
+      desc = `${connectedMCPs.length} connected: ${connectedMCPs.join(", ")}`;
     else if (noKey) desc = "no API key needed";
     return { name: p.name, label: p.displayName, description: desc, checked: !!alreadyEnabled };
   });
@@ -36,11 +37,15 @@ async function configurePlugin(name, plugin, settings) {
   }
   try {
     const result = await plugin.setup(pluginConfig);
-    console.log(`  ${ANSI.green}✓ Connected!${ANSI.reset} ${ANSI.gray}${formatResult(result)}${ANSI.reset}`);
+    console.log(
+      `  ${ANSI.green}✓ Connected!${ANSI.reset} ${ANSI.gray}${formatResult(result)}${ANSI.reset}`,
+    );
     settings.sources[plugin.name] = pluginConfig;
   } catch (err) {
     console.log(`  ${ANSI.red}✗ Connection failed: ${err.message}${ANSI.reset}`);
-    console.log(`  ${ANSI.gray}Skipping ${plugin.displayName}. You can try again with 'vibenotifications add ${name}'.${ANSI.reset}`);
+    console.log(
+      `  ${ANSI.gray}Skipping ${plugin.displayName}. You can try again with 'vibenotifications add ${name}'.${ANSI.reset}`,
+    );
   }
   console.log("");
 }
@@ -55,7 +60,9 @@ async function configureSelectedPlugins(selectedNames, plugins, settings) {
 
 export async function init() {
   console.log("");
-  console.log(`${ANSI.bold}vibenotifications${ANSI.reset} ${ANSI.gray}— customizable notifications for Claude Code${ANSI.reset}`);
+  console.log(
+    `${ANSI.bold}vibenotifications${ANSI.reset} ${ANSI.gray}— customizable notifications for Claude Code${ANSI.reset}`,
+  );
   console.log("");
   ensureDir();
   const plugins = await loadPlugins();
@@ -64,7 +71,9 @@ export async function init() {
   const items = buildItems(plugins, settings, connectedMCPs);
   const selectedNames = await checkboxSelect("Which sources do you want to enable?", items);
   if (selectedNames.length === 0) {
-    console.log("No sources selected. You can add them later with 'vibenotifications add <plugin>'.");
+    console.log(
+      "No sources selected. You can add them later with 'vibenotifications add <plugin>'.",
+    );
     return;
   }
   await configureSelectedPlugins(selectedNames, plugins, settings);
@@ -75,7 +84,9 @@ export async function init() {
   console.log("");
   console.log(`${ANSI.bold}You're all set!${ANSI.reset}`);
   console.log(`  Run ${ANSI.cyan}vibenotifications fetch${ANSI.reset} to test`);
-  console.log(`  Run ${ANSI.cyan}vibenotifications start${ANSI.reset} to start the background daemon`);
+  console.log(
+    `  Run ${ANSI.cyan}vibenotifications start${ANSI.reset} to start the background daemon`,
+  );
   console.log(`  Run ${ANSI.cyan}vibenotifications dashboard${ANSI.reset} to see notifications`);
   console.log("");
 }

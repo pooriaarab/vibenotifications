@@ -12,7 +12,10 @@ export default {
   setup: async () => {
     const mcpConfig = getMcpConfig();
     if (!mcpConfig) {
-      return { connected: true, note: "No MCP servers found. Configure MCPs in Claude Code first." };
+      return {
+        connected: true,
+        note: "No MCP servers found. Configure MCPs in Claude Code first.",
+      };
     }
     const serverCount = Object.keys(mcpConfig).length;
     return { connected: true, servers: serverCount };

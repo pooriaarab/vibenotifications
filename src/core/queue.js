@@ -16,11 +16,9 @@ export function deduplicateNotifications(existing, incoming) {
   const incomingById = new Map(incoming.map((n) => [n.id, n]));
   const incomingNotifications = [...incomingById.values()];
 
-  const supersededKeys = new Set(
-    incomingNotifications.map(replaceKey).filter(Boolean)
-  );
+  const supersededKeys = new Set(incomingNotifications.map(replaceKey).filter(Boolean));
   const survivors = existing.filter(
-    (n) => !incomingById.has(n.id) && !supersededKeys.has(replaceKey(n))
+    (n) => !incomingById.has(n.id) && !supersededKeys.has(replaceKey(n)),
   );
 
   return [...incomingNotifications, ...survivors];
@@ -37,14 +35,10 @@ export function sortByPriority(notifications) {
 
 export function filterByMinPriority(notifications, minPriority) {
   const minOrder = PRIORITY_ORDER[minPriority] ?? 2;
-  return notifications.filter(
-    (n) => (PRIORITY_ORDER[n.priority] ?? 2) <= minOrder
-  );
+  return notifications.filter((n) => (PRIORITY_ORDER[n.priority] ?? 2) <= minOrder);
 }
 
 export function trimNotifications(notifications, maxAge = 24 * 60 * 60 * 1000, maxCount = 100) {
   const cutoff = Date.now() - maxAge;
-  return notifications
-    .filter((n) => new Date(n.timestamp).getTime() > cutoff)
-    .slice(0, maxCount);
+  return notifications.filter((n) => new Date(n.timestamp).getTime() > cutoff).slice(0, maxCount);
 }
