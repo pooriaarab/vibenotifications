@@ -13,28 +13,28 @@ vibenotifications brings real-world notifications into your Claude Code session.
 
 Notifications appear across **5 Claude Code surfaces**:
 
-| Surface | How it works |
-|---------|-------------|
-| **Spinner verbs** | Notification titles replace spinner text while Claude thinks |
-| **Status line** | Top notification shown in the status bar with clickable links |
+| Surface               | How it works                                                  |
+| --------------------- | ------------------------------------------------------------- |
+| **Spinner verbs**     | Notification titles replace spinner text while Claude thinks  |
+| **Status line**       | Top notification shown in the status bar with clickable links |
 | **Context injection** | High-priority items injected into Claude's context (30% rate) |
-| **Session summary** | Notification digest shown when starting/resuming a session |
-| **Dashboard** | Full notification list via `vibenotifications dashboard` |
+| **Session summary**   | Notification digest shown when starting/resuming a session    |
+| **Dashboard**         | Full notification list via `vibenotifications dashboard`      |
 
 ## Plugins
 
-| Plugin | Source | API key needed? |
-|--------|--------|----------------|
-| **GitHub** | PR reviews, CI failures, mentions | Yes (PAT) |
-| **Slack** | DMs, channel messages | Yes (Bot token) |
-| **X/Twitter** | Mentions | Yes (Bearer token) |
-| **Email** | Unread count (placeholder) | Yes (IMAP) |
-| **Stocks/Crypto** | BTC, ETH, SOL, DOGE prices | No |
-| **MCP Bridge** | Connected MCP server status | No |
-| **Carbon Tracker** 🌱 | Live CO₂ estimate in status line (e.g. `🌱 85g CO₂ · ☕ boiling a kettle`) | No |
-| **Eco Mode** ♻️ | Injects token-saving prompt into Claude's context — cuts ~65% output tokens without quality loss | No |
-| **Vibe Suite** | Local vibe-suite events (viberadio recaps, task milestones) from `~/.vibe/notify.jsonl` | No |
-| **OffRouter** | OffRouter routing/limit/spend events from `~/.offrouter-*/notify.jsonl` (config: `homes`, `types`, `minSeverity`, `showRoutes`) | No |
+| Plugin                | Source                                                                                                                          | API key needed?    |
+| --------------------- | ------------------------------------------------------------------------------------------------------------------------------- | ------------------ |
+| **GitHub**            | PR reviews, CI failures, mentions                                                                                               | Yes (PAT)          |
+| **Slack**             | DMs, channel messages                                                                                                           | Yes (Bot token)    |
+| **X/Twitter**         | Mentions                                                                                                                        | Yes (Bearer token) |
+| **Email**             | Unread count (placeholder)                                                                                                      | Yes (IMAP)         |
+| **Stocks/Crypto**     | BTC, ETH, SOL, DOGE prices                                                                                                      | No                 |
+| **MCP Bridge**        | Connected MCP server status                                                                                                     | No                 |
+| **Carbon Tracker** 🌱 | Live CO₂ estimate in status line (e.g. `🌱 85g CO₂ · ☕ boiling a kettle`)                                                      | No                 |
+| **Eco Mode** ♻️       | Injects token-saving prompt into Claude's context — cuts ~65% output tokens without quality loss                                | No                 |
+| **Vibe Suite**        | Local vibe-suite events (viberadio recaps, task milestones) from `~/.vibe/notify.jsonl`                                         | No                 |
+| **OffRouter**         | OffRouter routing/limit/spend events from `~/.offrouter-*/notify.jsonl` (config: `homes`, `types`, `minSeverity`, `showRoutes`) | No                 |
 
 ## Setup
 
@@ -45,6 +45,7 @@ vibenotifications init
 ```
 
 This walks you through:
+
 1. Selecting which notification sources to enable
 2. Entering API keys/tokens for each source
 3. Testing connections
@@ -117,12 +118,13 @@ Every plugin exports a default object with:
 
 ```javascript
 export default {
-  name: "my-plugin",       // unique identifier
+  name: "my-plugin", // unique identifier
   displayName: "My Plugin", // shown in CLI
-  icon: "MP",              // short icon for status line
+  icon: "MP", // short icon for status line
 
-  requiredConfig: {        // prompts during setup
-    apiKey: { label: "API Key", type: "secret", instructions: "..." }
+  requiredConfig: {
+    // prompts during setup
+    apiKey: { label: "API Key", type: "secret", instructions: "..." },
   },
 
   setup: async (config) => {
@@ -131,16 +133,18 @@ export default {
 
   fetch: async (config) => {
     // Return array of notification objects
-    return [{
-      id: "unique-id",
-      source: "my-plugin",
-      title: "Short title",
-      body: "Longer description",
-      url: "https://...",
-      priority: "normal", // urgent | high | normal | low
-      timestamp: new Date().toISOString(),
-      actionable: false,
-    }];
+    return [
+      {
+        id: "unique-id",
+        source: "my-plugin",
+        title: "Short title",
+        body: "Longer description",
+        url: "https://...",
+        priority: "normal", // urgent | high | normal | low
+        timestamp: new Date().toISOString(),
+        actionable: false,
+      },
+    ];
   },
 };
 ```

@@ -138,7 +138,9 @@ section {
   cursor: pointer;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   font-size: 0.8rem;
-  transition: color 0.2s ease, background 0.2s ease;
+  transition:
+    color 0.2s ease,
+    background 0.2s ease;
   display: flex;
   align-items: center;
   gap: 0.4rem;
@@ -187,9 +189,15 @@ section {
   border-radius: 50%;
 }
 
-.terminal__dot--red { background: #ff5f57; }
-.terminal__dot--yellow { background: #febc2e; }
-.terminal__dot--green { background: #28c840; }
+.terminal__dot--red {
+  background: #ff5f57;
+}
+.terminal__dot--yellow {
+  background: #febc2e;
+}
+.terminal__dot--green {
+  background: #28c840;
+}
 
 .terminal__title {
   flex: 1;
@@ -222,8 +230,12 @@ section {
 }
 
 @keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .terminal__tag {
@@ -232,11 +244,21 @@ section {
   flex-shrink: 0;
 }
 
-.terminal__tag--stocks { color: #22c55e; }
-.terminal__tag--github { color: #a78bfa; }
-.terminal__tag--slack  { color: #38bdf8; }
-.terminal__tag--email  { color: #fb923c; }
-.terminal__tag--x      { color: #e5e5e5; }
+.terminal__tag--stocks {
+  color: #22c55e;
+}
+.terminal__tag--github {
+  color: #a78bfa;
+}
+.terminal__tag--slack {
+  color: #38bdf8;
+}
+.terminal__tag--email {
+  color: #fb923c;
+}
+.terminal__tag--x {
+  color: #e5e5e5;
+}
 
 .terminal__text {
   color: #a3a3a3;
@@ -264,8 +286,14 @@ section {
 }
 
 @keyframes blink {
-  0%, 50% { opacity: 1; }
-  51%, 100% { opacity: 0; }
+  0%,
+  50% {
+    opacity: 1;
+  }
+  51%,
+  100% {
+    opacity: 0;
+  }
 }
 
 /* --- Section Headers --- */
@@ -408,7 +436,9 @@ section {
   border: 1px solid #1e1e1e;
   border-radius: 10px;
   padding: 1.5rem;
-  transition: border-color 0.2s ease, background 0.2s ease;
+  transition:
+    border-color 0.2s ease,
+    background 0.2s ease;
 }
 
 .surface:hover {
@@ -476,7 +506,9 @@ section {
   border: 1px solid #262626;
   padding: 0.4rem 0.85rem;
   border-radius: 6px;
-  transition: border-color 0.2s ease, color 0.2s ease;
+  transition:
+    border-color 0.2s ease,
+    color 0.2s ease;
 }
 
 .footer__badge:hover {

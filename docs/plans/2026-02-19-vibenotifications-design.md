@@ -26,13 +26,13 @@ Developers install vibenotifications, connect their accounts through an interact
 
 ## 5 Notification Surfaces
 
-| Surface | Behavior | Best for |
-|---------|----------|----------|
-| Spinner verbs | Dynamic, hot-reloads mid-session via settings.json | Short alerts: "PR #42 approved by @jane" |
-| Status line | Persistent footer with clickable OSC 8 links | Current most important notification |
-| Context injection | Claude mentions things naturally in response | Actionable items Claude can help with |
-| Session summary | On session start, summary of what you missed | Catch-up after being away |
-| Hook statusMessage | Brief message during tool execution | Activity indicators |
+| Surface            | Behavior                                           | Best for                                 |
+| ------------------ | -------------------------------------------------- | ---------------------------------------- |
+| Spinner verbs      | Dynamic, hot-reloads mid-session via settings.json | Short alerts: "PR #42 approved by @jane" |
+| Status line        | Persistent footer with clickable OSC 8 links       | Current most important notification      |
+| Context injection  | Claude mentions things naturally in response       | Actionable items Claude can help with    |
+| Session summary    | On session start, summary of what you missed       | Catch-up after being away                |
+| Hook statusMessage | Brief message during tool execution                | Activity indicators                      |
 
 ## Architecture
 
@@ -72,7 +72,8 @@ export default {
     token: {
       label: "GitHub Personal Access Token",
       type: "secret",
-      instructions: "Go to github.com/settings/tokens -> Generate -> Select 'notifications' and 'repo' scopes",
+      instructions:
+        "Go to github.com/settings/tokens -> Generate -> Select 'notifications' and 'repo' scopes",
     },
     username: {
       label: "GitHub username",
@@ -109,14 +110,14 @@ export default {
 
 ## MVP Plugins (6)
 
-| Plugin | What it fetches | API needed |
-|--------|----------------|------------|
-| github | PR reviews, CI failures, mentions, issues | GitHub PAT |
-| slack | DMs, channel mentions, threads | Slack Bot Token |
-| x | Mentions, DMs, bookmark highlights | X API Bearer Token |
-| email | Unread count, important emails (subject lines) | IMAP or Gmail API |
-| stocks | Price alerts, portfolio changes | Free API (Alpha Vantage / CoinGecko) |
-| mcp-bridge | Pull from connected MCP servers | None (reads Claude Code MCP config) |
+| Plugin     | What it fetches                                | API needed                           |
+| ---------- | ---------------------------------------------- | ------------------------------------ |
+| github     | PR reviews, CI failures, mentions, issues      | GitHub PAT                           |
+| slack      | DMs, channel mentions, threads                 | Slack Bot Token                      |
+| x          | Mentions, DMs, bookmark highlights             | X API Bearer Token                   |
+| email      | Unread count, important emails (subject lines) | IMAP or Gmail API                    |
+| stocks     | Price alerts, portfolio changes                | Free API (Alpha Vantage / CoinGecko) |
+| mcp-bridge | Pull from connected MCP servers                | None (reads Claude Code MCP config)  |
 
 ## User Experience
 
@@ -192,6 +193,7 @@ Done! Open a Claude Code session to see your notifications.
 ### During Coding
 
 Spinner (contextual, dynamic):
+
 ```
 * PR #42 approved by @jane -- merge when ready... (23s)
 * CI failed on main: test_auth.py line 42... (15s)
@@ -200,6 +202,7 @@ Spinner (contextual, dynamic):
 ```
 
 Status line (persistent, clickable):
+
 ```
 Slack (DM) -- @sarah: "can you review the API changes?"
   https://app.slack.com/...
@@ -209,6 +212,7 @@ Context injection (Claude mentions naturally):
 "By the way, your CI is failing on test_auth.py line 42 -- it looks like the same auth module we're working on. Want me to check the error?"
 
 Session start summary:
+
 ```
 [vibenotifications] Welcome back! Here's what you missed:
   - 3 GitHub notifications (1 review request, 2 CI failures)

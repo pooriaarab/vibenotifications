@@ -13,6 +13,7 @@
 ### Task 1: Project Scaffolding
 
 **Files:**
+
 - Create: `package.json`
 - Create: `bin/vibenotifications.js`
 - Create: `.gitignore`
@@ -28,11 +29,7 @@
   "bin": {
     "vibenotifications": "./bin/vibenotifications.js"
   },
-  "files": [
-    "bin/",
-    "src/",
-    "README.md"
-  ],
+  "files": ["bin/", "src/", "README.md"],
   "keywords": [
     "claude-code",
     "notifications",
@@ -151,6 +148,7 @@ git commit -m "feat: scaffold vibenotifications with CLI entry point"
 ### Task 2: Config Manager
 
 **Files:**
+
 - Create: `src/core/config.js`
 
 **Step 1: Create config manager**
@@ -232,6 +230,7 @@ git commit -m "feat: add config manager for settings and notifications"
 ### Task 3: Plugin Loader
 
 **Files:**
+
 - Create: `src/core/plugins.js`
 
 **Step 1: Create plugin loader**
@@ -293,6 +292,7 @@ git commit -m "feat: add plugin loader with discovery and registry"
 ### Task 4: Notification Queue
 
 **Files:**
+
 - Create: `src/core/queue.js`
 
 **Step 1: Create notification queue**
@@ -319,16 +319,12 @@ export function sortByPriority(notifications) {
 
 export function filterByMinPriority(notifications, minPriority) {
   const minOrder = PRIORITY_ORDER[minPriority] ?? 2;
-  return notifications.filter(
-    (n) => (PRIORITY_ORDER[n.priority] ?? 2) <= minOrder
-  );
+  return notifications.filter((n) => (PRIORITY_ORDER[n.priority] ?? 2) <= minOrder);
 }
 
 export function trimNotifications(notifications, maxAge = 24 * 60 * 60 * 1000, maxCount = 100) {
   const cutoff = Date.now() - maxAge;
-  return notifications
-    .filter((n) => new Date(n.timestamp).getTime() > cutoff)
-    .slice(0, maxCount);
+  return notifications.filter((n) => new Date(n.timestamp).getTime() > cutoff).slice(0, maxCount);
 }
 ```
 
@@ -344,6 +340,7 @@ git commit -m "feat: add notification queue with dedup and priority sorting"
 ### Task 5: Surface Router
 
 **Files:**
+
 - Create: `src/core/surfaces.js`
 
 **Step 1: Create surface router**
@@ -408,7 +405,7 @@ function updateStatusLine(notification) {
       JSON.stringify({
         notification,
         timestamp: new Date().toISOString(),
-      })
+      }),
     );
   } catch {
     // Silent fail
@@ -428,7 +425,9 @@ export function getSessionSummary(notifications) {
   for (const [source, notifs] of Object.entries(bySource)) {
     const urgent = notifs.filter((n) => n.priority === "urgent" || n.priority === "high");
     if (urgent.length > 0) {
-      lines.push(`  - ${source}: ${notifs.length} notifications (${urgent.length} important: ${urgent[0].title})`);
+      lines.push(
+        `  - ${source}: ${notifs.length} notifications (${urgent.length} important: ${urgent[0].title})`,
+      );
     } else {
       lines.push(`  - ${source}: ${notifs.length} notifications`);
     }
@@ -460,6 +459,7 @@ git commit -m "feat: add surface router for spinner, status line, context inject
 ### Task 6: Background Daemon
 
 **Files:**
+
 - Create: `src/core/daemon.js`
 
 **Step 1: Create daemon**
@@ -538,7 +538,7 @@ export async function startDaemon() {
     {
       detached: true,
       stdio: "ignore",
-    }
+    },
   );
 
   child.unref();
@@ -587,6 +587,7 @@ git commit -m "feat: add background daemon with fetch, start, stop"
 ### Task 7: GitHub Plugin
 
 **Files:**
+
 - Create: `src/plugins/github.js`
 
 **Step 1: Create GitHub plugin**
@@ -659,6 +660,7 @@ git commit -m "feat: add GitHub plugin (PR reviews, CI, mentions)"
 ### Task 8: Stocks Plugin
 
 **Files:**
+
 - Create: `src/plugins/stocks.js`
 
 **Step 1: Create stocks plugin**
@@ -698,7 +700,7 @@ export default {
       try {
         const ids = cryptoSymbols.map((s) => cryptoMap[s.toUpperCase()]).join(",");
         const res = await fetch(
-          `https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=usd&include_24hr_change=true`
+          `https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=usd&include_24hr_change=true`,
         );
         if (res.ok) {
           const data = await res.json();
@@ -746,7 +748,11 @@ export default {
 
 function parseSymbols(input) {
   if (Array.isArray(input)) return input;
-  if (typeof input === "string") return input.split(",").map((s) => s.trim()).filter(Boolean);
+  if (typeof input === "string")
+    return input
+      .split(",")
+      .map((s) => s.trim())
+      .filter(Boolean);
   return [];
 }
 ```
@@ -763,6 +769,7 @@ git commit -m "feat: add stocks/crypto plugin (CoinGecko for crypto)"
 ### Task 9: Slack Plugin
 
 **Files:**
+
 - Create: `src/plugins/slack.js`
 
 **Step 1: Create Slack plugin**
@@ -811,7 +818,7 @@ export default {
         for (const channel of convData.channels.slice(0, 5)) {
           const histRes = await fetch(
             `https://slack.com/api/conversations.history?channel=${channel.id}&limit=1`,
-            { headers: { Authorization: `Bearer ${config.token}` } }
+            { headers: { Authorization: `Bearer ${config.token}` } },
           );
           const histData = await histRes.json();
           if (histData.ok && histData.messages?.length > 0) {
@@ -854,6 +861,7 @@ git commit -m "feat: add Slack plugin (DMs and channel messages)"
 ### Task 10: X/Twitter Plugin
 
 **Files:**
+
 - Create: `src/plugins/x.js`
 
 **Step 1: Create X plugin**
@@ -898,7 +906,7 @@ export default {
     try {
       const res = await fetch(
         `https://api.x.com/2/users/${config.userId}/mentions?max_results=10&tweet.fields=created_at,author_id,text`,
-        { headers: { Authorization: `Bearer ${config.bearerToken}` } }
+        { headers: { Authorization: `Bearer ${config.bearerToken}` } },
       );
       if (res.ok) {
         const data = await res.json();
@@ -936,6 +944,7 @@ git commit -m "feat: add X/Twitter plugin (mentions)"
 ### Task 11: Email Plugin
 
 **Files:**
+
 - Create: `src/plugins/email.js`
 
 **Step 1: Create email plugin**
@@ -952,7 +961,8 @@ export default {
     imapHost: {
       label: "IMAP server (e.g. imap.gmail.com)",
       type: "string",
-      instructions: "Gmail: imap.gmail.com | Outlook: outlook.office365.com | Yahoo: imap.mail.yahoo.com",
+      instructions:
+        "Gmail: imap.gmail.com | Outlook: outlook.office365.com | Yahoo: imap.mail.yahoo.com",
     },
     email: {
       label: "Email address",
@@ -985,7 +995,9 @@ export default {
         source: "email",
         title: `Email: check ${config.email} for unread messages`,
         body: "Full IMAP integration coming soon. For now, this is a reminder to check your inbox.",
-        url: config.imapHost.includes("gmail") ? "https://mail.google.com" : "https://outlook.live.com",
+        url: config.imapHost.includes("gmail")
+          ? "https://mail.google.com"
+          : "https://outlook.live.com",
         priority: "low",
         timestamp: new Date().toISOString(),
         actionable: false,
@@ -1007,6 +1019,7 @@ git commit -m "feat: add email plugin (placeholder, IMAP coming)"
 ### Task 12: MCP Bridge Plugin
 
 **Files:**
+
 - Create: `src/plugins/mcp-bridge.js`
 
 **Step 1: Create MCP bridge plugin**
@@ -1028,7 +1041,10 @@ export default {
   setup: async () => {
     const mcpConfig = getMcpConfig();
     if (!mcpConfig) {
-      return { connected: true, note: "No MCP servers found. Configure MCPs in Claude Code first." };
+      return {
+        connected: true,
+        note: "No MCP servers found. Configure MCPs in Claude Code first.",
+      };
     }
     const serverCount = Object.keys(mcpConfig).length;
     return { connected: true, servers: serverCount };
@@ -1092,6 +1108,7 @@ git commit -m "feat: add MCP bridge plugin (reads connected MCP servers)"
 ### Task 13: Interactive CLI Setup
 
 **Files:**
+
 - Create: `src/cli/init.js`
 
 **Step 1: Create interactive init wizard**
@@ -1126,7 +1143,10 @@ export async function init() {
 
   console.log("");
   const selection = await ask("Which sources to enable? (comma-separated numbers, e.g. 1,2,5): ");
-  const indices = selection.split(",").map((s) => parseInt(s.trim()) - 1).filter((i) => i >= 0 && i < pluginList.length);
+  const indices = selection
+    .split(",")
+    .map((s) => parseInt(s.trim()) - 1)
+    .filter((i) => i >= 0 && i < pluginList.length);
 
   for (const idx of indices) {
     const plugin = pluginList[idx];
@@ -1163,7 +1183,9 @@ export async function init() {
   console.log("  Installed Claude Code hooks");
 
   console.log("");
-  console.log("Done! Run 'vibenotifications fetch' to test, or 'vibenotifications start' for the daemon.");
+  console.log(
+    "Done! Run 'vibenotifications fetch' to test, or 'vibenotifications start' for the daemon.",
+  );
   console.log("Run 'vibenotifications dashboard' to see notifications.");
   console.log("");
 
@@ -1183,6 +1205,7 @@ git commit -m "feat: add interactive CLI setup wizard"
 ### Task 14: Claude Code Hooks
 
 **Files:**
+
 - Create: `src/core/hooks.js`
 - Create: `src/hooks/post-tool.js`
 - Create: `src/hooks/session-start.js`
@@ -1206,7 +1229,10 @@ export async function installHooks() {
   // Copy hook scripts to ~/.vibenotifications/
   const hookFiles = [
     { src: join(__dirname, "../hooks/post-tool.js"), dest: join(VN_DIR, "hooks/post-tool.js") },
-    { src: join(__dirname, "../hooks/session-start.js"), dest: join(VN_DIR, "hooks/session-start.js") },
+    {
+      src: join(__dirname, "../hooks/session-start.js"),
+      dest: join(VN_DIR, "hooks/session-start.js"),
+    },
     { src: join(__dirname, "../statusline.js"), dest: join(VN_DIR, "statusline.js") },
   ];
 
@@ -1229,11 +1255,13 @@ export async function installHooks() {
   settings.hooks.PostToolUse = settings.hooks.PostToolUse.filter((h) => !isVNHook(h));
   settings.hooks.PostToolUse.push({
     matcher: "Bash|Write|Edit|Read",
-    hooks: [{
-      type: "command",
-      command: `node ${join(VN_DIR, "hooks/post-tool.js")}`,
-      timeout: 3,
-    }],
+    hooks: [
+      {
+        type: "command",
+        command: `node ${join(VN_DIR, "hooks/post-tool.js")}`,
+        timeout: 3,
+      },
+    ],
   });
 
   // SessionStart hook
@@ -1241,12 +1269,14 @@ export async function installHooks() {
   settings.hooks.SessionStart = settings.hooks.SessionStart.filter((h) => !isVNHook(h));
   settings.hooks.SessionStart.push({
     matcher: "startup|resume",
-    hooks: [{
-      type: "command",
-      command: `node ${join(VN_DIR, "hooks/session-start.js")}`,
-      statusMessage: "Loading your notifications...",
-      timeout: 10,
-    }],
+    hooks: [
+      {
+        type: "command",
+        command: `node ${join(VN_DIR, "hooks/session-start.js")}`,
+        statusMessage: "Loading your notifications...",
+        timeout: 10,
+      },
+    ],
   });
 
   // Status line
@@ -1326,9 +1356,7 @@ function run() {
   try {
     if (existsSync(CLAUDE_SETTINGS)) {
       const settings = JSON.parse(readFileSync(CLAUDE_SETTINGS, "utf-8"));
-      const verbs = notifications
-        .slice(0, 20)
-        .map((n) => `[${n.source}] ${n.title}`.slice(0, 60));
+      const verbs = notifications.slice(0, 20).map((n) => `[${n.source}] ${n.title}`.slice(0, 60));
 
       if (verbs.length > 0) {
         settings.spinnerVerbs = { mode: "replace", verbs };
@@ -1341,11 +1369,15 @@ function run() {
 
   // Context injection for high-priority actionable items (30% of the time)
   if (Math.random() < 0.3) {
-    const actionable = notifications.find((n) => n.actionable && (n.priority === "urgent" || n.priority === "high"));
+    const actionable = notifications.find(
+      (n) => n.actionable && (n.priority === "urgent" || n.priority === "high"),
+    );
     if (actionable) {
-      console.log(JSON.stringify({
-        additionalContext: `[vibenotifications] ${actionable.title}. ${actionable.body || ""} ${actionable.url ? "URL: " + actionable.url : ""} -- Mention this naturally if relevant.`,
-      }));
+      console.log(
+        JSON.stringify({
+          additionalContext: `[vibenotifications] ${actionable.title}. ${actionable.body || ""} ${actionable.url ? "URL: " + actionable.url : ""} -- Mention this naturally if relevant.`,
+        }),
+      );
     }
   }
 
@@ -1400,7 +1432,9 @@ function run() {
   for (const [source, notifs] of Object.entries(bySource)) {
     const urgent = notifs.filter((n) => n.priority === "urgent" || n.priority === "high");
     if (urgent.length > 0) {
-      lines.push(`  - ${source}: ${notifs.length} (${urgent.length} important: ${urgent[0].title})`);
+      lines.push(
+        `  - ${source}: ${notifs.length} (${urgent.length} important: ${urgent[0].title})`,
+      );
     } else {
       lines.push(`  - ${source}: ${notifs.length} notifications`);
     }
@@ -1464,14 +1498,10 @@ function render() {
   }
 
   const icon = notification.source.toUpperCase();
-  console.log(
-    `\x1b[33m[${icon}]\x1b[0m ${notification.title}`
-  );
+  console.log(`\x1b[33m[${icon}]\x1b[0m ${notification.title}`);
 
   if (notification.url) {
-    console.log(
-      `\x1b[90m  \x1b]8;;${notification.url}\x07${notification.url}\x1b]8;;\x07\x1b[0m`
-    );
+    console.log(`\x1b[90m  \x1b]8;;${notification.url}\x07${notification.url}\x1b]8;;\x07\x1b[0m`);
   }
 }
 ```
@@ -1488,6 +1518,7 @@ git commit -m "feat: add Claude Code hooks, status line, and session summary"
 ### Task 15: Dashboard & Uninstall CLI
 
 **Files:**
+
 - Create: `src/cli/dashboard.js`
 - Create: `src/cli/uninstall.js`
 - Create: `src/cli/add.js`
@@ -1519,7 +1550,9 @@ export async function dashboard() {
 
     for (const [source, notifs] of Object.entries(bySource)) {
       const urgent = notifs.filter((n) => n.priority === "urgent" || n.priority === "high");
-      console.log(`  ${source}: ${notifs.length} notifications${urgent.length ? ` (${urgent.length} important)` : ""}`);
+      console.log(
+        `  ${source}: ${notifs.length} notifications${urgent.length ? ` (${urgent.length} important)` : ""}`,
+      );
       for (const n of notifs.slice(0, 3)) {
         console.log(`    - ${n.title}`);
       }
@@ -1528,7 +1561,9 @@ export async function dashboard() {
 
   console.log("");
 
-  const enabledSources = Object.entries(settings.sources).filter(([, c]) => c.enabled).map(([n]) => n);
+  const enabledSources = Object.entries(settings.sources)
+    .filter(([, c]) => c.enabled)
+    .map(([n]) => n);
   console.log(`Sources:    ${enabledSources.join(", ") || "none"}`);
 
   const pidFile = join(VN_DIR, "daemon.pid");
@@ -1550,7 +1585,9 @@ import { stopDaemon } from "../core/daemon.js";
 export async function uninstall() {
   console.log("");
 
-  try { await stopDaemon(); } catch {}
+  try {
+    await stopDaemon();
+  } catch {}
   await removeHooks();
   console.log("  Removed Claude Code hooks");
 
@@ -1666,6 +1703,7 @@ git commit -m "feat: add dashboard, uninstall, add, remove CLI commands"
 ### Task 17: README
 
 **Files:**
+
 - Create: `README.md`
 
 Write a README with: one-liner, install command, interactive setup example, 6 plugins table, 5 surfaces explained, dashboard, uninstall, contributing guide, MIT license.
@@ -1682,6 +1720,7 @@ git commit -m "docs: add README"
 ### Task 18: Landing Page
 
 **Files:**
+
 - Create: `site/index.html`
 - Create: `site/style.css`
 
@@ -1690,6 +1729,7 @@ Static HTML/CSS landing page for vibenotifications.com. Dark theme, terminal moc
 **Step 1: Create site directory and files**
 
 Minimal landing page with:
+
 - Hero: "See your GitHub PRs, Slack DMs, and stock prices while you code."
 - Terminal mockup showing spinner verbs with notifications
 - Install: `npm install -g vibenotifications`

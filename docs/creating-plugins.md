@@ -20,9 +20,9 @@ export default {
   // These are prompted during `vibenotifications init` or `vibenotifications add my-plugin`
   requiredConfig: {
     apiKey: {
-      label: "API Key",           // shown as the prompt label
-      type: "secret",             // "secret" hides input, "string" shows it
-      instructions: "Go to ...",  // help text shown before the prompt
+      label: "API Key", // shown as the prompt label
+      type: "secret", // "secret" hides input, "string" shows it
+      instructions: "Go to ...", // help text shown before the prompt
     },
     workspace: {
       label: "Workspace ID",
@@ -52,14 +52,14 @@ export default {
     const data = await res.json();
 
     return data.items.map((item) => ({
-      id: `my-plugin-${item.id}`,          // unique ID for dedup
-      source: "my-plugin",                  // matches plugin name
-      title: item.title,                    // short title (shown in spinner)
-      body: item.description || "",          // longer description
-      url: item.link || "",                  // clickable link
-      priority: "normal",                    // urgent | high | normal | low
-      timestamp: item.created_at,            // ISO 8601 timestamp
-      actionable: false,                     // if true, may be injected into Claude's context
+      id: `my-plugin-${item.id}`, // unique ID for dedup
+      source: "my-plugin", // matches plugin name
+      title: item.title, // short title (shown in spinner)
+      body: item.description || "", // longer description
+      url: item.link || "", // clickable link
+      priority: "normal", // urgent | high | normal | low
+      timestamp: item.created_at, // ISO 8601 timestamp
+      actionable: false, // if true, may be injected into Claude's context
     }));
   },
 };
@@ -69,35 +69,35 @@ export default {
 
 Every notification returned from `fetch()` must have these fields:
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `id` | string | Unique identifier. Used for deduplication. Prefix with your plugin name. |
-| `source` | string | Plugin name. Must match `name` field. |
-| `title` | string | Short title (max ~60 chars). Shown in spinner verbs and status line. |
-| `body` | string | Longer description. Shown in dashboard and context injection. |
-| `url` | string | Clickable link. Shown as OSC 8 hyperlink in status line. |
-| `priority` | string | One of: `urgent`, `high`, `normal`, `low`. Controls which surfaces show it. |
-| `timestamp` | string | ISO 8601 timestamp. Used for sorting and expiration (24h default). |
-| `actionable` | boolean | If `true`, may be injected into Claude's context for high-priority items. |
+| Field        | Type    | Description                                                                 |
+| ------------ | ------- | --------------------------------------------------------------------------- |
+| `id`         | string  | Unique identifier. Used for deduplication. Prefix with your plugin name.    |
+| `source`     | string  | Plugin name. Must match `name` field.                                       |
+| `title`      | string  | Short title (max ~60 chars). Shown in spinner verbs and status line.        |
+| `body`       | string  | Longer description. Shown in dashboard and context injection.               |
+| `url`        | string  | Clickable link. Shown as OSC 8 hyperlink in status line.                    |
+| `priority`   | string  | One of: `urgent`, `high`, `normal`, `low`. Controls which surfaces show it. |
+| `timestamp`  | string  | ISO 8601 timestamp. Used for sorting and expiration (24h default).          |
+| `actionable` | boolean | If `true`, may be injected into Claude's context for high-priority items.   |
 
 ## Priority Levels
 
 Priority determines which surfaces show the notification:
 
 | Priority | Spinner | Status Line | Context Injection |
-|----------|---------|-------------|-------------------|
-| `urgent` | Yes | Yes | Yes |
-| `high` | Yes | Yes | Yes |
-| `normal` | Yes | Yes | No |
-| `low` | No | Yes | No |
+| -------- | ------- | ----------- | ----------------- |
+| `urgent` | Yes     | Yes         | Yes               |
+| `high`   | Yes     | Yes         | Yes               |
+| `normal` | Yes     | Yes         | No                |
+| `low`    | No      | Yes         | No                |
 
 These defaults are configurable in `~/.vibenotifications/settings.json`.
 
 ## Config Types
 
-| Type | Behavior |
-|------|----------|
-| `"string"` | Normal text input, visible while typing |
+| Type       | Behavior                                 |
+| ---------- | ---------------------------------------- |
+| `"string"` | Normal text input, visible while typing  |
 | `"secret"` | Input is hidden (like a password prompt) |
 
 ## No API Key? Use `requiredConfig: {}`
@@ -153,23 +153,23 @@ export default {
 
   fetch: async (config) => {
     try {
-      const res = await fetch(
-        `https://wttr.in/${encodeURIComponent(config.city)}?format=j1`
-      );
+      const res = await fetch(`https://wttr.in/${encodeURIComponent(config.city)}?format=j1`);
       if (!res.ok) return [];
       const data = await res.json();
       const current = data.current_condition[0];
 
-      return [{
-        id: `weather-${config.city}-${new Date().toISOString().slice(0, 13)}`,
-        source: "weather",
-        title: `${config.city}: ${current.temp_F}°F, ${current.weatherDesc[0].value}`,
-        body: `Feels like ${current.FeelsLikeF}°F. Humidity: ${current.humidity}%`,
-        url: `https://wttr.in/${encodeURIComponent(config.city)}`,
-        priority: "low",
-        timestamp: new Date().toISOString(),
-        actionable: false,
-      }];
+      return [
+        {
+          id: `weather-${config.city}-${new Date().toISOString().slice(0, 13)}`,
+          source: "weather",
+          title: `${config.city}: ${current.temp_F}°F, ${current.weatherDesc[0].value}`,
+          body: `Feels like ${current.FeelsLikeF}°F. Humidity: ${current.humidity}%`,
+          url: `https://wttr.in/${encodeURIComponent(config.city)}`,
+          priority: "low",
+          timestamp: new Date().toISOString(),
+          actionable: false,
+        },
+      ];
     } catch {
       return [];
     }
