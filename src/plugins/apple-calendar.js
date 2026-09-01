@@ -65,10 +65,11 @@ export default {
 
 function fetchAppleEvents(lookahead) {
   try {
-    const output = execSync(
-      `icalBuddy -f -nc -nrd -ea -n -li 10 eventsFrom:today to:today`,
-      { encoding: "utf-8", stdio: ["pipe", "pipe", "pipe"], timeout: 5000 }
-    ).trim();
+    const output = execSync(`icalBuddy -f -nc -nrd -ea -n -li 10 eventsFrom:today to:today`, {
+      encoding: "utf-8",
+      stdio: ["pipe", "pipe", "pipe"],
+      timeout: 5000,
+    }).trim();
     if (!output) return [];
     return parseAppleOutput(output, lookahead);
   } catch {

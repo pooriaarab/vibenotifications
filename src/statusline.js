@@ -21,9 +21,9 @@ const SESSION_FILE = join(VN_DIR, "carbon-session.json");
 function sanitize(str, maxLen = 200) {
   if (typeof str !== "string") return "";
   return str
-    .replace(/\x1b\[[0-9;]*[a-zA-Z]/g, "")   // CSI sequences
+    .replace(/\x1b\[[0-9;]*[a-zA-Z]/g, "") // CSI sequences
     .replace(/\x1b\][^\x07\x1b]*(\x07|\x1b\\)/g, "") // OSC sequences
-    .replace(/[\x00-\x1f\x7f]/g, "")          // remaining control chars
+    .replace(/[\x00-\x1f\x7f]/g, "") // remaining control chars
     .slice(0, maxLen);
 }
 
@@ -43,18 +43,24 @@ function liveCarbonTitle() {
     if (Date.now() - s.startTime > 8 * 60 * 60 * 1000) return null;
     const rate = CO2_RATES[s.model] ?? 0.85;
     const toolTokens = (s.toolCallCount || 0) * 2000;
-    const timeTokens = Math.round((Date.now() - s.startTime) / 60000 * 500);
+    const timeTokens = Math.round(((Date.now() - s.startTime) / 60000) * 500);
     const tokens = Math.max(toolTokens, timeTokens, s.estimatedTokens || 0);
     const co2 = (tokens / 1000) * rate;
     return `🌱 ${co2.toFixed(1)}g CO₂ · ${getComparison(co2)}`;
-  } catch { return null; }
+  } catch {
+    return null;
+  }
 }
 
 let input = "";
 process.stdin.setEncoding("utf-8");
 process.stdin.on("data", (chunk) => (input += chunk));
 process.stdin.on("end", () => {
-  try { render(); } catch { /* silent */ }
+  try {
+    render();
+  } catch {
+    /* silent */
+  }
 });
 
 function render() {
@@ -63,8 +69,10 @@ function render() {
   if (existsSync(NOTIFICATIONS_FILE)) {
     try {
       const ns = JSON.parse(readFileSync(NOTIFICATIONS_FILE, "utf-8"));
-      topNonCarbon = ns.find(n => n.source !== "carbon" && n.priority === "high") ?? null;
-    } catch { /* silent */ }
+      topNonCarbon = ns.find((n) => n.source !== "carbon" && n.priority === "high") ?? null;
+    } catch {
+      /* silent */
+    }
   }
 
   if (topNonCarbon) {
@@ -72,15 +80,16 @@ function render() {
     const title = sanitize(topNonCarbon.title);
     console.log(`\x1b[33m[${icon}]\x1b[0m ${title}`);
     const url = sanitizeUrl(topNonCarbon.url);
-    if (url)
-      console.log(`\x1b[90m  \x1b]8;;${url}\x07${url}\x1b]8;;\x07\x1b[0m`);
+    if (url) console.log(`\x1b[90m  \x1b]8;;${url}\x07${url}\x1b]8;;\x07\x1b[0m`);
     return;
   }
 
   const carbonTitle = liveCarbonTitle();
   if (carbonTitle) {
     console.log(`\x1b[33m[CARBON]\x1b[0m ${carbonTitle}`);
-    console.log(`\x1b[90m  \x1b]8;;https://carbon-llm.com\x07https://carbon-llm.com\x1b]8;;\x07\x1b[0m`);
+    console.log(
+      `\x1b[90m  \x1b]8;;https://carbon-llm.com\x07https://carbon-llm.com\x1b]8;;\x07\x1b[0m`,
+    );
     return;
   }
 

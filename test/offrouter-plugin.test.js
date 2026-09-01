@@ -97,7 +97,7 @@ test("fetch: surfaces warn and error events by default and hides route events", 
     assert.equal(results.length, 2);
     assert.deepEqual(
       results.map((n) => n.title),
-      ["! Claude usage is near the subscription limit", "x OpenRouter returned a provider error"]
+      ["! Claude usage is near the subscription limit", "x OpenRouter returned a provider error"],
     );
   } finally {
     rmSync(dir, { recursive: true, force: true });
@@ -114,7 +114,10 @@ test("fetch: surfaces route events when showRoutes is true", async () => {
 
     assert.equal(results.length, 3);
     assert.equal(results[0].title, "i routed task to glm-5.2");
-    assert.equal(results.some((n) => n.title === "i using API key fallback capacity"), false);
+    assert.equal(
+      results.some((n) => n.title === "i using API key fallback capacity"),
+      false,
+    );
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }
@@ -168,12 +171,15 @@ test("fetch: honors OFFROUTER_HOME notify.jsonl by default", async () => {
         home: "personal",
         message: "OFFROUTER_HOME provider error",
         meta: {},
-      }) + "\n"
+      }) + "\n",
     );
 
     const results = await plugin.fetch({});
 
-    assert.equal(results.some((n) => n.title === "x OFFROUTER_HOME provider error"), true);
+    assert.equal(
+      results.some((n) => n.title === "x OFFROUTER_HOME provider error"),
+      true,
+    );
   } finally {
     if (previousHome === undefined) {
       delete process.env.OFFROUTER_HOME;
@@ -185,7 +191,9 @@ test("fetch: honors OFFROUTER_HOME notify.jsonl by default", async () => {
 });
 
 test("fetch: returns [] when configured channel files do not exist", async () => {
-  const results = await plugin.fetch({ homes: [join(tmpdir(), "offrouter-plugin-no-such-file.jsonl")] });
+  const results = await plugin.fetch({
+    homes: [join(tmpdir(), "offrouter-plugin-no-such-file.jsonl")],
+  });
   assert.deepEqual(results, []);
 });
 

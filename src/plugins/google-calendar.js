@@ -47,7 +47,11 @@ export default {
       }
       const nameMatch = text.match(/X-WR-CALNAME:(.*)/);
       const calName = nameMatch ? nameMatch[1].trim() : "Google Calendar";
-      return { connected: true, calendar: calName, lookahead: `${parseInt(config.lookahead) || 10}min` };
+      return {
+        connected: true,
+        calendar: calName,
+        lookahead: `${parseInt(config.lookahead) || 10}min`,
+      };
     } catch (err) {
       throw new Error(`Could not fetch calendar: ${err.message}`);
     }
@@ -114,7 +118,10 @@ function resolveICSTiming(minutesUntil, lookahead, event) {
   if (minutesUntil <= lookahead && minutesUntil > 0) {
     return { priority: "high", body: `In ${Math.round(minutesUntil)} min` };
   }
-  return { priority: "low", body: `At ${event.start.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}` };
+  return {
+    priority: "low",
+    body: `At ${event.start.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`,
+  };
 }
 
 function parseICS(text) {
@@ -150,5 +157,12 @@ function parseICSDate(str) {
   if (!match) return null;
   const [, y, mo, d, h = "0", mi = "0", s = "0", z] = match;
   if (z) return new Date(`${y}-${mo}-${d}T${h}:${mi}:${s}Z`);
-  return new Date(parseInt(y), parseInt(mo) - 1, parseInt(d), parseInt(h), parseInt(mi), parseInt(s));
+  return new Date(
+    parseInt(y),
+    parseInt(mo) - 1,
+    parseInt(d),
+    parseInt(h),
+    parseInt(mi),
+    parseInt(s),
+  );
 }
