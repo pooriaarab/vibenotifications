@@ -32,8 +32,8 @@ https://github.com/pooriaarab/scripts/blob/main/pr-standards.md
 
 ## Brand and design
 
-Read `.agents/brand.md` before changing public copy, names, claims, or assets.
-Read `.agents/design.md` before changing visual or terminal surfaces.
+Read `.agents/brand.md` and `.agents/design.md` before changing any public surface.
+Confirm deployment ownership and user approval before adding live routes.
 
 Run these checks before completing a change:
 
