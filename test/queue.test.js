@@ -11,11 +11,17 @@ test("deduplicateNotifications: new ids are prepended", () => {
   const existing = [{ id: "a", title: "old" }];
   const incoming = [{ id: "b", title: "new" }];
   const result = deduplicateNotifications(existing, incoming);
-  assert.deepEqual(result.map((n) => n.id), ["b", "a"]);
+  assert.deepEqual(
+    result.map((n) => n.id),
+    ["b", "a"],
+  );
 });
 
 test("deduplicateNotifications: matching id upserts in place instead of duplicating", () => {
-  const existing = [{ id: "carbon-session", title: "5g" }, { id: "other", title: "x" }];
+  const existing = [
+    { id: "carbon-session", title: "5g" },
+    { id: "other", title: "x" },
+  ];
   const incoming = [{ id: "carbon-session", title: "6g" }];
   const result = deduplicateNotifications(existing, incoming);
   assert.equal(result.length, 2);
@@ -26,14 +32,20 @@ test("deduplicateNotifications: bucketed source ids replace old buckets", () => 
   const existing = [{ id: "stocks-aapl-100", source: "stocks", title: "old" }];
   const incoming = [{ id: "stocks-aapl-101", source: "stocks", title: "new" }];
   const result = deduplicateNotifications(existing, incoming);
-  assert.deepEqual(result.map((n) => n.id), ["stocks-aapl-101"]);
+  assert.deepEqual(
+    result.map((n) => n.id),
+    ["stocks-aapl-101"],
+  );
 });
 
 test("deduplicateNotifications: stable numeric external ids are preserved", () => {
   const existing = [{ id: "github-100", source: "github", title: "old" }];
   const incoming = [{ id: "github-101", source: "github", title: "new" }];
   const result = deduplicateNotifications(existing, incoming);
-  assert.deepEqual(result.map((n) => n.id), ["github-101", "github-100"]);
+  assert.deepEqual(
+    result.map((n) => n.id),
+    ["github-101", "github-100"],
+  );
 });
 
 test("sortByPriority: urgent before high before normal before low", () => {
@@ -44,7 +56,10 @@ test("sortByPriority: urgent before high before normal before low", () => {
     { priority: "high", timestamp: "2026-01-01" },
   ];
   const sorted = sortByPriority(notifs);
-  assert.deepEqual(sorted.map((n) => n.priority), ["urgent", "high", "normal", "low"]);
+  assert.deepEqual(
+    sorted.map((n) => n.priority),
+    ["urgent", "high", "normal", "low"],
+  );
 });
 
 test("sortByPriority: newer timestamp wins within same priority", () => {
@@ -59,7 +74,10 @@ test("sortByPriority: newer timestamp wins within same priority", () => {
 test("filterByMinPriority: excludes lower-priority-than-min", () => {
   const notifs = [{ priority: "low" }, { priority: "high" }, { priority: "normal" }];
   const result = filterByMinPriority(notifs, "normal");
-  assert.deepEqual(result.map((n) => n.priority), ["high", "normal"]);
+  assert.deepEqual(
+    result.map((n) => n.priority),
+    ["high", "normal"],
+  );
 });
 
 test("trimNotifications: drops entries older than maxAge and caps count", () => {
@@ -69,7 +87,10 @@ test("trimNotifications: drops entries older than maxAge and caps count", () => 
     { id: "2", timestamp: new Date(now - 25 * 60 * 60 * 1000).toISOString() }, // 25h old
   ];
   const result = trimNotifications(notifs, 24 * 60 * 60 * 1000, 100);
-  assert.deepEqual(result.map((n) => n.id), ["1"]);
+  assert.deepEqual(
+    result.map((n) => n.id),
+    ["1"],
+  );
 });
 
 test("trimNotifications: maxCount caps the result", () => {

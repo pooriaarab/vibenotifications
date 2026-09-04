@@ -71,7 +71,7 @@ async function processChannel(channel, token, notifications) {
 async function fetchHistory(channelId, token) {
   const res = await fetch(
     `https://slack.com/api/conversations.history?channel=${channelId}&limit=1`,
-    { headers: { Authorization: `Bearer ${token}` }, signal: AbortSignal.timeout(10_000) }
+    { headers: { Authorization: `Bearer ${token}` }, signal: AbortSignal.timeout(10_000) },
   );
   const data = await res.json();
   if (!data.ok) return null;

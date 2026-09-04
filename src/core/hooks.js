@@ -16,8 +16,14 @@ const CLAUDE_SETTINGS = join(homedir(), ".claude", "settings.json");
 export function syncHookFiles() {
   const hookFiles = [
     { src: join(__dirname, "../hooks/post-tool.js"), dest: join(VN_DIR, "hooks/post-tool.js") },
-    { src: join(__dirname, "../hooks/carbon-track.js"), dest: join(VN_DIR, "hooks/carbon-track.js") },
-    { src: join(__dirname, "../hooks/session-start.js"), dest: join(VN_DIR, "hooks/session-start.js") },
+    {
+      src: join(__dirname, "../hooks/carbon-track.js"),
+      dest: join(VN_DIR, "hooks/carbon-track.js"),
+    },
+    {
+      src: join(__dirname, "../hooks/session-start.js"),
+      dest: join(VN_DIR, "hooks/session-start.js"),
+    },
     { src: join(__dirname, "../statusline.js"), dest: join(VN_DIR, "statusline.js") },
     // Shared modules relative-imported by the files above (e.g. statusline.js
     // imports "./core/co2-rates.js", post-tool.js imports "../core/atomic-write.js") —
@@ -73,12 +79,14 @@ function ensureSessionStartHook(settings) {
   settings.hooks.SessionStart = settings.hooks.SessionStart.filter((h) => !isVNHook(h));
   settings.hooks.SessionStart.push({
     matcher: "startup|resume",
-    hooks: [{
-      type: "command",
-      command: `node ${join(VN_DIR, "hooks/session-start.js")}`,
-      statusMessage: "Loading your notifications...",
-      timeout: 10,
-    }],
+    hooks: [
+      {
+        type: "command",
+        command: `node ${join(VN_DIR, "hooks/session-start.js")}`,
+        statusMessage: "Loading your notifications...",
+        timeout: 10,
+      },
+    ],
   });
 }
 
@@ -100,7 +108,9 @@ function ensureStatusLine(settings) {
 function ensureSpinnerVerbs(settings) {
   const backupPath = join(VN_DIR, "spinner-verbs.orig.json");
   if (settings.spinnerVerbs && !existsSync(backupPath)) {
-    atomicWriteFileSync(backupPath, JSON.stringify(settings.spinnerVerbs, null, 2), { mode: 0o600 });
+    atomicWriteFileSync(backupPath, JSON.stringify(settings.spinnerVerbs, null, 2), {
+      mode: 0o600,
+    });
   }
 }
 

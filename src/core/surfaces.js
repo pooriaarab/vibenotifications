@@ -56,7 +56,7 @@ function updateStatusLine(notification) {
       JSON.stringify({
         notification,
         timestamp: new Date().toISOString(),
-      })
+      }),
     );
   } catch {
     // Silent fail

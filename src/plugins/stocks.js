@@ -8,10 +8,14 @@ export default {
       label: "Symbols to track",
       type: "string",
       placeholder: "BTC,ETH,SOL",
-      instructions: "Enter crypto or stock symbols separated by commas.\n   Crypto (free): BTC, ETH, SOL, DOGE  |  Stocks: AAPL, TSLA, etc.",
+      instructions:
+        "Enter crypto or stock symbols separated by commas.\n   Crypto (free): BTC, ETH, SOL, DOGE  |  Stocks: AAPL, TSLA, etc.",
       validate: (value) => {
         if (!value) return "Enter at least one symbol.";
-        const symbols = value.split(",").map((s) => s.trim()).filter(Boolean);
+        const symbols = value
+          .split(",")
+          .map((s) => s.trim())
+          .filter(Boolean);
         if (symbols.length === 0) return "Enter at least one symbol.";
         for (const s of symbols) {
           if (!/^[A-Za-z]{1,10}$/.test(s)) {
@@ -43,7 +47,11 @@ export default {
 
 function parseSymbols(input) {
   if (Array.isArray(input)) return input;
-  if (typeof input === "string") return input.split(",").map((s) => s.trim()).filter(Boolean);
+  if (typeof input === "string")
+    return input
+      .split(",")
+      .map((s) => s.trim())
+      .filter(Boolean);
   return [];
 }
 
@@ -53,7 +61,7 @@ async function fetchCryptoNotifications(cryptoSymbols, cryptoMap, notifications)
     const ids = cryptoSymbols.map((s) => cryptoMap[s.toUpperCase()]).join(",");
     const res = await fetch(
       `https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=usd&include_24hr_change=true`,
-      { signal: AbortSignal.timeout(10_000) }
+      { signal: AbortSignal.timeout(10_000) },
     );
     if (!res.ok) return;
     const data = await res.json();

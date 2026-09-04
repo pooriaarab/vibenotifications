@@ -83,7 +83,7 @@ export default {
       } else {
         throw new Error(
           `Could not auto-detect IMAP server for '${domain}'. ` +
-          `Please enter it manually (e.g. imap.${domain}).`
+            `Please enter it manually (e.g. imap.${domain}).`,
         );
       }
     }

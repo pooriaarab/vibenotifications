@@ -15,7 +15,9 @@ const SESSION_FILE = join(homedir(), ".vibenotifications", "carbon-session.json"
 
 // Ratio used in the eco prompt copy below — derived from the shared rate
 // table so it can't drift independently of carbon.js/statusline.js.
-const HAIKU_SAVINGS_X = (CO2_RATES["claude-sonnet-4-6"] / CO2_RATES["claude-haiku-4-5-20251001"]).toFixed(1);
+const HAIKU_SAVINGS_X = (
+  CO2_RATES["claude-sonnet-4-6"] / CO2_RATES["claude-haiku-4-5-20251001"]
+).toFixed(1);
 
 const ECO_PROMPTS = {
   lite: `ECO MODE (lite): Drop filler words, pleasantries, hedging. Keep all technical substance. No trailing summaries of what you just did.`,
@@ -124,7 +126,8 @@ export default {
       placeholder: "50",
       validate: (value) => {
         const n = parseFloat(value);
-        if (value.trim() !== "" && (isNaN(n) || n < 0)) return "Enter a number >= 0, or 0 to disable";
+        if (value.trim() !== "" && (isNaN(n) || n < 0))
+          return "Enter a number >= 0, or 0 to disable";
         return null;
       },
     },

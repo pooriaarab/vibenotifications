@@ -32,7 +32,9 @@ export async function add(pluginName) {
 
   try {
     const result = await plugin.setup(pluginConfig);
-    console.log(`  ${ANSI.green}✓ Connected!${ANSI.reset} ${ANSI.gray}${JSON.stringify(result)}${ANSI.reset}`);
+    console.log(
+      `  ${ANSI.green}✓ Connected!${ANSI.reset} ${ANSI.gray}${JSON.stringify(result)}${ANSI.reset}`,
+    );
     settings.sources[plugin.name] = pluginConfig;
     saveSettings(settings);
     console.log("  Saved.");
