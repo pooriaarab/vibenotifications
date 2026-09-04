@@ -4,12 +4,21 @@ import { join } from "node:path";
 
 // Local-first bridge to OffRouter: OffRouter appends privacy-safe routing,
 // spend, limit, and provider events as JSON lines. No API key, no network.
-const DEFAULT_HOME_DIRS = [join(homedir(), ".offrouter-personal"), join(homedir(), ".offrouter-work")];
+const DEFAULT_HOME_DIRS = [
+  join(homedir(), ".offrouter-personal"),
+  join(homedir(), ".offrouter-work"),
+];
 
 // Match the daemon queue's 24h trim so aged channel lines don't resurface.
 const MAX_AGE_MS = 24 * 60 * 60 * 1000;
 
-const EVENT_TYPES = ["route", "near_limit", "subscription_exhausted", "api_key_fallback", "provider_error"];
+const EVENT_TYPES = [
+  "route",
+  "near_limit",
+  "subscription_exhausted",
+  "api_key_fallback",
+  "provider_error",
+];
 const DEFAULT_TYPES = EVENT_TYPES.filter((type) => type !== "route");
 const SEVERITY_RANK = { info: 0, warn: 1, error: 2 };
 const PRIORITY_BY_SEVERITY = { info: "low", warn: "high", error: "high" };
@@ -53,7 +62,9 @@ function configuredHomes(config) {
 function configuredTypes(config) {
   const input = config?.types;
   const values = Array.isArray(input) ? input : asString(input)?.split(",");
-  const types = values ? values.map((type) => type.trim()).filter((type) => EVENT_TYPES.includes(type)) : DEFAULT_TYPES;
+  const types = values
+    ? values.map((type) => type.trim()).filter((type) => EVENT_TYPES.includes(type))
+    : DEFAULT_TYPES;
   const effectiveTypes = config?.showRoutes ? [...types, "route"] : types;
   return new Set(effectiveTypes);
 }
