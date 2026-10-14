@@ -1,267 +1,195 @@
 # vibenotifications
 
-<p align="center">Pull GitHub, Slack, and stock alerts into Claude Code while you stay in the terminal.</p>
+[![npm version](https://img.shields.io/npm/v/vibenotifications)](https://www.npmjs.com/package/vibenotifications)
+[![Downloads/month](https://img.shields.io/npm/dm/vibenotifications)](https://www.npmjs.com/package/vibenotifications)
+[![MIT license](https://img.shields.io/badge/license-MIT-blue)](https://opensource.org/license/mit)
 
-<p align="center">
-  <a href="https://www.npmjs.com/package/vibenotifications"><img src="https://img.shields.io/npm/v/vibenotifications" alt="npm v0.6.0"/></a>
-  <a href="https://github.com/pooriaarab/vibenotifications/actions"><img src="https://github.com/pooriaarab/vibenotifications/actions/workflows/ci.yml/badge.svg" alt="CI"/></a>
-  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue" alt="License MIT"/></a>
-  <a href="src/plugins"><img src="https://img.shields.io/badge/plugins-12-informational" alt="12 notification plugins"/></a>
-</p>
+[Website](https://getvibe.dev/vibenotifications) · [Setup](#send-your-first-notification) · [Commands](#runtime-surfaces)
 
-```text
-$ vibenotifications dashboard
-
-vibenotifications Dashboard
-----------------------------
-  stocks: 3 notifications
-    - ETH: $2,599.51 (+3.6%)
-    - SOL: $104.61 (+3.2%)
-    - BTC: $79,418 (+2.7%)
-
-Sources:    stocks
-Daemon:     stopped
-Interval:   60s
-```
-
-<p align="center"><em>Dashboard after <code>vibenotifications fetch</code> with the stocks plugin, 14 Sep 2026.</em></p>
+vibenotifications is an open-source notification CLI for Claude Code users who monitor external services while they code.
+It polls configured sources and stores a local notification queue.
+Hooks expose events through spinner text, a status line, context, and session summaries; a terminal dashboard provides the fifth surface.
 
 ## Install
 
-```bash
+```sh
 npm install -g vibenotifications
-vibenotifications init
 ```
 
-One line to install, one line to run.
+Use Node.js 20 or 22, the versions covered by repository CI.
+The package has zero runtime dependencies.
+Claude Code is required for hooks; the dashboard runs separately.
 
-`init` is a wizard: pick sources, enter tokens, test each connection, and install Claude Code hooks. It needs a real terminal (raw stdin). It writes hooks into `~/.claude/settings.json`. A full pre-install snapshot of that file is kept at `~/.vibenotifications/claude-settings.backup.json`.
+## Send your first notification
 
-## Quick start
+This local-file example needs no credentials or environment variables. The CLI does not load a `.env` file.
 
-The stocks plugin is the path that needs no API key. Crypto symbols `BTC`, `ETH`, `SOL`, and `DOGE` fetch live prices from CoinGecko.
-
-```bash
-vibenotifications add stocks
+```sh
+vibenotifications add vibe
+mkdir -p ~/.vibe
+node --input-type=module -e 'import { appendFileSync } from "node:fs"; import { homedir } from "node:os"; appendFileSync(homedir()+"/.vibe/notify.jsonl", JSON.stringify({kind:"task-done",agent:"demo",ts:Date.now(),payload:{message:"Hello from your terminal"}})+"\n")'
 vibenotifications fetch
 vibenotifications dashboard
 ```
 
-When `add stocks` asks for symbols, enter `BTC,ETH,SOL`.
-
-```
-Fetching from 1 source(s)...
-  Stocks/Crypto: 3 notifications
-Total: 3 notifications routed to surfaces.
-
-vibenotifications Dashboard
-----------------------------
-  stocks: 3 notifications
-    - ETH: $2,599.51 (+3.6%)
-    - SOL: $104.61 (+3.2%)
-    - BTC: $79,418 (+2.7%)
-
-Sources:    stocks
-Daemon:     stopped
-Interval:   60s
-```
-
-## Why
-
-For people who work in Claude Code and today check GitHub's inbox or Slack in a browser. Not for anyone who does not run Claude Code. This is not a replacement for Slack, Notification Center, or GitHub's own inbox, and it is not a general notification daemon.
-
-## add
-
-Enable one source. `add` with no name lists the plugins.
-
-```bash
-vibenotifications add stocks
-```
-
-```
-Setting up Stocks/Crypto...
-  Enter crypto or stock symbols separated by commas.
-   Crypto (free): BTC, ETH, SOL, DOGE  |  Stocks: AAPL, TSLA, etc.
-  Symbols to track (BTC,ETH,SOL):   ✓ Connected! {"connected":true,"tracking":"3 symbols"}
-  Saved.
-```
-
-```bash
-vibenotifications remove stocks
-```
-
-```
-Removed stocks.
-```
-
-| Plugin | Source | Credentials |
-|--------|--------|-------------|
-| **GitHub** | PR reviews, CI failures, mentions | GitHub PAT (`notifications`, `repo`) |
-| **Slack** | DMs, channel messages | Slack bot token (`xoxb-...`) |
-| **X/Twitter** | Mentions | Bearer token and numeric user id |
-| **Email** | Reminder to check mail. IMAP unread count is not implemented | Email address and app password |
-| **Stocks/Crypto** | BTC, ETH, SOL, DOGE from CoinGecko. Other tickers are placeholders | None for those four crypto symbols |
-| **MCP Bridge** | Names of MCP servers in Claude Code settings | None |
-| **Carbon Tracker** | Session CO₂ estimate in the queue | Claude model name |
-| **Eco Mode** | Injects a shorter-output prompt into Claude's context | Intensity level (`lite`, `full`, `ultra`) |
-| **Vibe Suite** | Events from `~/.vibe/notify.jsonl` | None |
-| **OffRouter** | Routing, limit, and spend events from `~/.offrouter-*/notify.jsonl` | None |
-| **Apple Calendar** | Upcoming macOS Calendar events | `icalBuddy` on macOS |
-| **Google Calendar** | Upcoming events from a private ICS URL | Google Calendar ICS URL |
-
-## fetch
-
-Pull every enabled source once. No daemon.
-
-```bash
-vibenotifications fetch
-```
-
-```
-Fetching from 1 source(s)...
-  Stocks/Crypto: 3 notifications
-Total: 3 notifications routed to surfaces.
-```
-
-Start a background loop (default 60s) and stop it:
-
-```bash
-vibenotifications start
-vibenotifications stop
-```
-
-```
-Daemon started (PID: 61070, interval: 60s, log: ~/.vibenotifications/daemon.log)
-Daemon stopped (PID: 61070)
-```
-
-## dashboard
-
-Read `~/.vibenotifications/notifications.json` and print the queue.
-
-```bash
-vibenotifications dashboard
-```
-
-```
-vibenotifications Dashboard
-----------------------------
-  stocks: 3 notifications
-    - ETH: $2,599.51 (+3.6%)
-    - SOL: $104.61 (+3.2%)
-    - BTC: $79,418 (+2.7%)
-
-Sources:    stocks
-Daemon:     stopped
-Interval:   60s
-```
-
-## uninstall
-
-```bash
-vibenotifications uninstall
-```
-
-```
-No daemon running.
-  Removed Claude Code hooks
-  Cleaned up ~/.vibenotifications/
-
-vibenotifications removed.
-```
-
-This removes the hooks, stops the daemon, and deletes `~/.vibenotifications/`. Any custom `statusLine` or `spinnerVerbs` you had before install are restored from the snapshot taken at install.
+Success: the dashboard includes `demo: task done` under `vibe`.
+Run `vibenotifications init` in an interactive terminal to select sources and install Claude Code hooks.
+It changes `~/.claude/settings.json` and saves a pre-install snapshot under `~/.vibenotifications/`.
 
 ## How it works
 
-1. A background daemon fetches enabled sources on a schedule (default: 60s). `fetch` does the same pass once.
-2. Notifications are deduplicated, priority-sorted, and written to `~/.vibenotifications/notifications.json`.
-3. Claude Code hooks read that file and route items to surfaces:
-   - PostToolUse updates spinner verbs and may inject context
-   - SessionStart prints a summary digest
-   - A status line command shows the top notification
-
-Notifications appear on five Claude Code surfaces:
-
-| Surface | How it works |
-|---------|-------------|
-| **Spinner verbs** | Notification titles replace spinner text while Claude thinks |
-| **Status line** | Top notification in the status bar, with clickable links |
-| **Context injection** | High-priority items injected into Claude's context (30% rate) |
-| **Session summary** | Digest when you start or resume a session |
-| **Dashboard** | Full list via `vibenotifications dashboard` |
-
-## Configuration
-
-Settings live in `~/.vibenotifications/settings.json`:
-
-```json
-{
-  "fetchInterval": 60,
-  "surfaces": {
-    "spinnerVerbs": { "enabled": true, "maxLength": 60 },
-    "statusLine": { "enabled": true },
-    "contextInjection": { "enabled": true, "rate": 0.3 },
-    "sessionSummary": { "enabled": true }
-  },
-  "priority": {
-    "minSpinner": "normal",
-    "minStatusLine": "low",
-    "minContextInjection": "high"
-  }
-}
+```text
+12 plugins -> fetch once / daemon -> deduplicated local queue
+                                    -> spinner / status line
+                                    -> context / session summary / dashboard
 ```
 
-See [docs/configuration.md](docs/configuration.md) and [docs/surfaces.md](docs/surfaces.md).
+The daemon defaults to a 60-second interval and reads settings each cycle.
+Settings and credentials live in `~/.vibenotifications/settings.json` with owner-only file permissions.
 
-## Contributing
+## Why it exists
 
-See [CONTRIBUTING.md](https://github.com/pooriaarab/.github/blob/main/CONTRIBUTING.md). Add plugins in `src/plugins/` (the loader reads every `.js` file there). Full guide: [docs/creating-plugins.md](docs/creating-plugins.md).
+GitHub and Slack each have their own inbox. Switching to those applications interrupts terminal work.
+vibenotifications brings selected events into Claude Code. ntfy serves a different destination: phone and desktop push notifications.
 
-### Plugin interface
+## Compare
 
-Every plugin exports a default object with:
+Scope checked on 2026-10-14 against source and [ntfy documentation](https://docs.ntfy.sh/).
 
-```javascript
-export default {
-  name: "my-plugin",       // unique identifier
-  displayName: "My Plugin", // shown in CLI
-  icon: "MP",              // short icon for status line
+| Aspect | vibenotifications | ntfy |
+| --- | --- | --- |
+| Main scope | Poll sources into Claude Code | Publish push messages to phone or desktop |
+| Input | Configured plugins and local event files | HTTP PUT/POST or CLI publish |
+| Configuration | Local JSON and setup wizard | Topics and subscriber clients |
+| Deployment | Local Node.js process | Notification server and clients |
 
-  requiredConfig: {        // prompts during setup
-    apiKey: { label: "API Key", type: "secret", instructions: "..." }
-  },
+## Coverage
 
-  setup: async (config) => {
-    // Validate credentials, return { connected: true }
-  },
+The loader discovers 12 plugin files. Status describes source implementation, not a live service certification.
 
-  fetch: async (config) => {
-    // Return array of notification objects
-    return [{
-      id: "unique-id",
-      source: "my-plugin",
-      title: "Short title",
-      body: "Longer description",
-      url: "https://...",
-      priority: "normal", // urgent | high | normal | low
-      timestamp: new Date().toISOString(),
-      actionable: false,
-    }];
-  },
-};
-```
+| Plugin | Status | Behavior and setup |
+| --- | --- | --- |
+| GitHub | Implemented; live verification pending | Notifications API; personal access token with `notifications` and `repo` scopes |
+| Slack | Implemented; live verification pending | Latest recent message from up to five direct-message conversations; bot token |
+| X (Twitter) | Implemented; live verification pending | Up to ten mentions; bearer token and numeric user ID |
+| Email | Stub | Inbox reminder only; no IMAP connection or unread count |
+| Stocks/Crypto | Partial | CoinGecko prices for BTC, ETH, SOL, DOGE; all other tickers are placeholders |
+| MCP Bridge | Configuration-only | Reads Model Context Protocol (MCP) server names from Claude settings; no health checks |
+| Carbon Tracker | Estimate | Local tool-call and time-based CO₂ estimates; model selection |
+| Eco Mode | Prompt | Injects shorter-output instructions; `lite`, `full`, or `ultra` |
+| Vibe Suite | Implemented local reader | Reads `~/.vibe/notify.jsonl`; no key |
+| OffRouter | Implemented local reader | Reads personal/work `notify.jsonl` files; no key |
+| Apple Calendar | Implemented; live verification pending | Requires macOS and `icalBuddy` |
+| Google Calendar | Implemented; live verification pending | Private ICS calendar URL and lookahead minutes |
 
-### Releasing
+No credential-backed integration was live-verified for this rewrite.
+All 12 implementations were source-inspected; local automated checks do not establish remote API availability.
 
-CI runs on every PR and push to `main` (syntax-check + package validation). To publish a new version:
+## Common use cases
 
-1. Bump `version` in `package.json`, commit, merge to `main`.
-2. `git tag vX.Y.Z && git push origin vX.Y.Z`
-3. The publish workflow builds and publishes to npm automatically (idempotent — safe to rerun; skips if that version is already published).
+1. Claude Code developers: show GitHub review requests in the status line.
+2. Slack users: inspect recent bot-accessible direct messages without opening another window.
+3. Vibe Suite users: surface local test failures from JSON Lines events.
+4. OffRouter users: show provider errors and subscription-limit warnings in Claude Code.
+5. macOS developers: display Apple Calendar meeting reminders through `icalBuddy`.
 
-Requires an `NPM_TOKEN` repo secret (npm automation token with publish access).
+## Features
+
+- **Local queue:** upserts matching IDs and sorts events by priority.
+- **Source selection:** enables and removes plugins through the CLI.
+- **Five surfaces:** spinner, status line, context, session summary, and dashboard.
+- **Optional estimates:** Carbon Tracker reports estimates; Eco Mode adds output instructions.
+
+## Runtime surfaces
+
+Node.js runs the CLI and background daemon. Apple Calendar also needs macOS.
+The MCP Bridge is a configuration reader; this package exposes no MCP server tools.
+
+| Command | Purpose |
+| --- | --- |
+| No command, or `init` | Interactive source setup and hook installation |
+| `add [plugin]` | Configure a source, or list plugin IDs |
+| `remove <plugin>` | Remove a configured source |
+| `fetch` | Poll enabled sources once |
+| `start` | Start the background daemon |
+| `stop` | Stop the daemon |
+| `dashboard` | Print the local queue |
+| `uninstall` | Stop the daemon, remove hooks, restore saved settings, delete local configuration |
+| `help`, `--help`, `-h` | Print usage |
+
+## Delivery and behavior limits
+
+The queue retains at most 100 notifications younger than 24 hours. It has no durable delivery acknowledgement.
+Fetch errors commonly produce empty results. A successful command does not prove every service responded.
+Slack reads direct messages, despite setup instructions requesting channel scopes. It does not fetch channel messages.
+Google Calendar uses a small ICS parser without recurrence expansion or full timezone handling.
+Email setup accepts an app password but does not authenticate to an IMAP server.
+Keep credentials local; they are stored as JSON, without encryption.
+Context injection uses a fixed 30% random gate for actionable high-priority events. Eco Mode bypasses that gate.
+Some surface settings do not govern standalone hooks. Output and carbon estimates carry no accuracy or savings guarantee.
+
+## Integration guides
+
+- GitHub: run `vibenotifications add github`, then enter the personal access token when prompted.
+- Slack: run `vibenotifications add slack`, then enter a bot token with direct-message read and history access.
+- Google Calendar: run `vibenotifications add google-calendar`, then enter the secret iCal address from calendar settings.
+- Apple Calendar: install `icalBuddy` on macOS, then run `vibenotifications add apple-calendar`.
+- CoinGecko: run `vibenotifications add stocks`, then enter `BTC,ETH,SOL,DOGE` in the symbol prompt.
+
+## Status
+
+Version 0.6.0 is pre-1.0; configuration and behavior can change.
+Report problems through [GitHub issues](https://github.com/pooriaarab/vibenotifications/issues).
+Public case studies are not yet published in this repository.
+
+## FAQ
+
+### Which integrations are verified?
+
+vibenotifications has 12 source-inspected plugins with the limits listed above.
+Credential-backed services were not live-tested for this rewrite.
+
+### Does vibenotifications provide a managed notification service?
+
+vibenotifications runs on your machine. You manage credentials, polling, and the local daemon.
+
+### How is vibenotifications different from ntfy?
+
+vibenotifications polls plugins and surfaces events inside Claude Code.
+[ntfy](https://docs.ntfy.sh/) accepts published messages for phone and desktop push clients.
+
+### Does vibenotifications read email?
+
+vibenotifications currently emits a reminder to check your inbox.
+It does not read messages or count unread mail.
+
+### Can vibenotifications track stock prices?
+
+vibenotifications fetches four crypto symbols from CoinGecko.
+Other symbols produce placeholder notifications without market prices.
+
+### Does vibenotifications check MCP server health?
+
+vibenotifications reads configured server names from Claude settings.
+It does not connect to those servers or verify availability.
+
+### Where does vibenotifications store credentials?
+
+vibenotifications stores source settings in `~/.vibenotifications/settings.json`.
+The file uses owner-only permissions; values remain readable JSON.
+
+### How do I remove vibenotifications hooks?
+
+vibenotifications provides `vibenotifications uninstall` to stop the daemon and remove local configuration.
+It restores saved status-line and spinner settings from the installation snapshot.
+
+## Contributing and releasing
+
+Plugins export a default object with `name`, `displayName`, `icon`, `requiredConfig`, `setup`, and `fetch`.
+The loader imports every JavaScript file in `src/plugins/`; `fetch` returns notification objects with stable IDs.
+Run `npm test` and `git diff --check` before submitting changes.
+The publish workflow uses version tags and an `NPM_TOKEN` secret; this documentation change does not publish a release.
 
 ## License
 
-[MIT](LICENSE)
+[MIT](https://opensource.org/license/mit).
