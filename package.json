@@ -1,6 +1,6 @@
 {
   "name": "vibenotifications",
-  "version": "0.6.0",
+  "version": "0.6.1",
   "description": "Local notifications for Claude Code from GitHub, Slack, X, calendars, CoinGecko, and Vibe Suite events.",
   "type": "module",
   "scripts": {
